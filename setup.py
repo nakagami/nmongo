@@ -18,6 +18,7 @@ setup(
     author='Hajime Nakagami',
     author_email='nakagami@gmail.com',
     description='Yet another MongoDB driver',
+    long_description=open('README.rst').read(),
     license="MIT",
     py_modules=['nmongo'],
 )
