@@ -66,8 +66,10 @@ Read
 
    >>> cur = db.fruits.find({'name': 'banana'})
    >>> cur.fetchone()
-   {'_id': ObjectId("5823dd6d3d28909ce9f6e99c"), 'name': 'banana', 'price': 50}
-   >>> cur.fetchone()
+   {'price': 50, '_id': ObjectId("5826b2313d28909ce9f6ea63"), 'name': 'banana'}
+   >>> cur = db.fruits.find()
+   >>> cur.fetchall()
+   [{'price': 200, '_id': ObjectId("5826b2273d28909ce9f6ea61"), 'name': 'apple'}, {'price': 100, '_id': ObjectId("5826b2313d28909ce9f6ea62"), 'name': 'orange'}, {'price': 50, '_id': ObjectId("5826b2313d28909ce9f6ea63"), 'name': 'banana'}]
    >>>
 
 Update
