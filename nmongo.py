@@ -107,8 +107,23 @@ def from_decimal(d):
 
 def to_decimal(b):
     "decimal 128 bytes to decimal.Decimal"
-    # TODO:
-    return decimal.Decimal('0.0')
+    sign = 1 if (b[-1] & 0x80) else 0
+    if (b[-1] & 0x60) == 0x60:
+        exponent = to_uint(bytes([b[-2], b[-1] & 0x1f])) * 2 - 6176
+    else:
+        exponent = to_uint(bytes([b[-2], b[-1] & 0x7f])) // 2 - 6176
+    digits = to_uint(b[:-2])
+    v = {
+        (0, 0, 8160): decimal.Decimal('NaN'),
+        (1, 0, 8160): decimal.Decimal('-NaN'),
+        (0, 0, 9184): decimal.Decimal('sNaN'),
+        (1, 0, 9184): decimal.Decimal('-sNaN'),
+        (0, 0, 6112): decimal.Decimal('Inf'),
+        (1, 0, 6112): decimal.Decimal('-Inf'),
+    }.get((sign, digits, exponent))
+    if v:
+        return v
+    return decimal.Decimal((sign, decimal.Decimal(digits).as_tuple()[1],  exponent))
 
 
 def to_uint(b):
