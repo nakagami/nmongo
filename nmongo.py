@@ -91,6 +91,10 @@ def _from_int(n, ln):
     return bytes(b)
 
 
+def from_int16(n):
+    return _from_int(n, 2)
+
+
 def from_int32(n):
     return _from_int(n, 4)
 
@@ -98,6 +102,8 @@ def from_int32(n):
 def from_int64(n):
     return _from_int(n, 8)
 
+def from_int112(n):
+    return _from_int(n, 14)
 
 def from_decimal(d):
     "from decimal.Decimal to decimal128 binary"
@@ -112,8 +118,19 @@ def from_decimal(d):
     }.get((sign, digits, exponent))
     if v:
         return v
-    # TODO:
-    return b'\x00\x00\x00\x00\x00\x00\x00\x00'
+    num = 0
+    for n in digits:
+        num = num * 10 + n
+    fraction = from_int112(num)
+    if fraction[-1] & 0b00100000:
+        exponent = exponent // 2 - 6176
+    else:
+        exponent = exponent * 2 - 6176
+    exponent = from_int16(exponent)
+    if sign:
+        exponent = bytes([exponent[0], exponent[1] & 0x80])
+
+    return fraction + exponent
 
 
 def to_decimal(b):
