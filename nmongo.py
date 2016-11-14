@@ -123,12 +123,12 @@ def from_decimal(d):
         num = num * 10 + n
     fraction = from_int112(num)
     if fraction[-1] & 0b00100000:
-        exponent = exponent // 2 - 6176
+        exponent = (exponent + 6176 ) // 2
     else:
-        exponent = exponent * 2 - 6176
+        exponent = (exponent + 6176) * 2
     exponent = from_int16(exponent)
     if sign:
-        exponent = bytes([exponent[0], exponent[1] & 0x80])
+        exponent = bytes([exponent[0], exponent[1] | 0x80])
 
     return fraction + exponent
 
