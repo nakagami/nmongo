@@ -104,6 +104,8 @@ Count each collection records
    ...     print(collection.name, collection.count())
    ...
    fruits 3
+   >>> db.getCollection('fruits').count()
+   3
    >>>
 
 See also mongo Shell Methods (Collection and Database sections).

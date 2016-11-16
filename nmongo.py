@@ -976,6 +976,11 @@ class MongoDatabase:
     def getCollectionNames(self):
         return [r['name'] for r in self.getCollectionInfos()]
 
+    def getCollection(self, name):
+        if name in self.getCollectionNames():
+            return MongoCollection(self, name)
+        raise OperationalError("'%s' is not collection name" % (name, ))
+
     def getCollections(self):
         return [MongoCollection(self, name) for name in self.getCollectionNames()]
 
