@@ -95,6 +95,17 @@ Delete
    >>> db.fruits.count()
    2
 
+Count each collection records
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+   >>> for collection in db.getCollections():
+   ...     print(collection.name, collection.count())
+   ...
+   fruits 3
+   >>>
+
 See also mongo Shell Methods (Collection and Database sections).
 
 - https://docs.mongodb.com/manual/reference/method/#collection

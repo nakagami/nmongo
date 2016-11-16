@@ -976,6 +976,9 @@ class MongoDatabase:
     def getCollectionNames(self):
         return [r['name'] for r in self.getCollectionInfos()]
 
+    def getCollections(self):
+        return [MongoCollection(self, name) for name in self.getCollectionNames()]
+
     def getLastError(self):
         return self.getLastErrorObj()['err']
 
