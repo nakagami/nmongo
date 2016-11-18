@@ -119,6 +119,7 @@ Features Not Implemented
 Common
 ~~~~~~~~
 
+- GridFS
 - ssl
 
 MicroPython
