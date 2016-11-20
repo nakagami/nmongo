@@ -18,7 +18,7 @@ Install
 CPython
 ::
 
-   $ pip install nmongo
+   $ python3 -m pip install nmongo
 
 
 MicroPython
