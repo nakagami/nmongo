@@ -27,13 +27,27 @@ import socket
 import datetime
 import time
 import binascii
-import decimal
 import struct
 import random
 try:
     import hashlib
 except ImportError:
     import uhashlib as hashlib
+try:
+    from decimal import Decimal
+except ImportError:
+    # Internal Decimal class for micropython
+    class Decimal:
+        def __init__(self, v):
+            if isinstance(v, str):
+                pass
+            elif isinstance(v, int):
+                pass
+            elif isinstance(v, float):
+                pass
+            elif isinstance(v, tuple):
+                pass
+            raise TypeError("Cannot convert %r to Decimal" % (v,))
 
 __version__ = '0.2.0'
 
@@ -106,7 +120,7 @@ def from_int112(n):
     return _from_int(n, 14)
 
 def from_decimal(d):
-    "from decimal.Decimal to decimal128 binary"
+    "from Decimal to decimal128 binary"
     sign, digits, exponent = d.as_tuple()
     v = {
         (0, (), 'n'): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00|',         # NaN
@@ -134,7 +148,7 @@ def from_decimal(d):
 
 
 def to_decimal(b):
-    "decimal 128 bytes to decimal.Decimal"
+    "decimal 128 bytes to Decimal"
     sign = 1 if (b[-1] & 0x80) else 0
     if (b[-1] & 0x60) == 0x60:
         exponent = to_uint(bytes([b[-2], b[-1] & 0x1f])) * 2 - 6176
@@ -142,16 +156,16 @@ def to_decimal(b):
         exponent = to_uint(bytes([b[-2], b[-1] & 0x7f])) // 2 - 6176
     digits = to_uint(b[:-2])
     v = {
-        (0, 0, 8160): decimal.Decimal('NaN'),
-        (1, 0, 8160): decimal.Decimal('-NaN'),
-        (0, 0, 9184): decimal.Decimal('sNaN'),
-        (1, 0, 9184): decimal.Decimal('-sNaN'),
-        (0, 0, 6112): decimal.Decimal('Inf'),
-        (1, 0, 6112): decimal.Decimal('-Inf'),
+        (0, 0, 8160): Decimal('NaN'),
+        (1, 0, 8160): Decimal('-NaN'),
+        (0, 0, 9184): Decimal('sNaN'),
+        (1, 0, 9184): Decimal('-sNaN'),
+        (0, 0, 6112): Decimal('Inf'),
+        (1, 0, 6112): Decimal('-Inf'),
     }.get((sign, digits, exponent))
     if v:
         return v
-    return decimal.Decimal((sign, decimal.Decimal(digits).as_tuple()[1],  exponent))
+    return Decimal((sign, decimal.Decimal(digits).as_tuple()[1],  exponent))
 
 
 def to_uint(b):
@@ -196,7 +210,7 @@ def _bson_encode_item(ename, v):
         b = b'\x0a' + to_cstring(ename)
     elif t == Code:
         b = b'\x0d' + to_cstring(ename) + v.to_bytes()
-    elif sys.implementation.name != 'micropython' and t == decimal.Decimal:
+    elif t == Decimal:
         b = b'\x13' + to_cstring(ename) + from_decimal(v)
     else:
         raise TypeError("%s:%s" % (ename, str(t)))
