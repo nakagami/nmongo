@@ -61,12 +61,14 @@ except ImportError:
         def __init__(self, v):
             if isinstance(v, str):
                 t = {
-                    'NaN': (0, 0, 8160),
-                    '-NaN': (1, 0, 8160),
-                    'sNaN': (0, 0, 9184),
-                    '-sNaN': (1, 0, 9184),
-                    'Inf': (0, 0, 6112),
-                    '-Inf': (1, 0, 6112),
+                    'NaN': (0, (), 'n'),
+                    '-NaN': (1, (), 'n'),
+                    'sNaN': (0, (), 'N'),
+                    '-sNaN': (1, (), 'N'),
+                    'Infinity': (0, (0, ), 'F'),
+                    '-Infinity': (1, (0, ), 'F'),
+                    'Inf': (0, (0, ), 'F'),
+                    '-Inf': (1, (0, ), 'F'),
                 }.get(v)
                 if t:
                     sign, digits, exponent = t
@@ -107,12 +109,12 @@ except ImportError:
 
         def __str__(self):
             s = {
-                (0, 0, 8160): 'NaN',
-                (1, 0, 8160): '-NaN',
-                (0, 0, 9184): 'sNaN',
-                (1, 0, 9184): '-sNaN',
-                (0, 0, 6112): 'Inf',
-                (1, 0, 6112): '-Inf',
+                (0, (), 'n'): 'NaN',
+                (1, (), 'n'): '-NaN',
+                (0, (), 'N'): 'sNaN',
+                (1, (), 'N'): '-sNaN',
+                (0, (0,), 'F'): 'Infinity',
+                (1, (0,), 'F'): '-Infinity',
             }.get((self.sign, self.digits, self.exponent))
             if s:
                 return s
@@ -207,8 +209,8 @@ def from_decimal(d):
         (1, (), 'n'): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfc',      # -NaN
         (0, (), 'N'): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00~',         # sNaN
         (1, (), 'N'): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfe',      # -sNaN
-        (0, (0, ), 'F'): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00x',      # Inf
-        (1, (0, ), 'F'): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf8',   # -Inf
+        (0, (0, ), 'F'): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00x',      # Infinity
+        (1, (0, ), 'F'): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf8',   # -Infinity
     }.get((sign, digits, exponent))
     if v:
         return v
@@ -240,8 +242,8 @@ def to_decimal(b):
         (1, 0, 8160): Decimal('-NaN'),
         (0, 0, 9184): Decimal('sNaN'),
         (1, 0, 9184): Decimal('-sNaN'),
-        (0, 0, 6112): Decimal('Inf'),
-        (1, 0, 6112): Decimal('-Inf'),
+        (0, 0, 6112): Decimal('Infinity'),
+        (1, 0, 6112): Decimal('-Infinity'),
     }.get((sign, digits, exponent))
     if v:
         return v

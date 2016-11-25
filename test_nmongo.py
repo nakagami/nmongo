@@ -203,12 +203,14 @@ class TestMongo(unittest.TestCase):
             [-100, (1, (1, 0, 0), 0), '-100'],
             ['100', (0, (1, 0, 0), 0), '100'],
             ['-100', (1, (1, 0, 0), 0), '-100'],
-            ['NaN', (0, 0, 8160), 'NaN'],
-            ['-NaN', (1, 0, 8160), '-NaN'],
-            ['sNaN', (0, 0, 9184), 'sNaN'],
-            ['-sNaN', (1, 0, 9184), '-sNaN'],
-            ['Inf', (0, 0, 6112), 'Inf'],
-            ['-Inf', (1, 0, 6112), '-Inf'],
+            ['NaN', (0, (), 'n'), 'NaN'],
+            ['-NaN', (1, (), 'n'), '-NaN'],
+            ['sNaN', (0, (), 'N'), 'sNaN'],
+            ['-sNaN', (1, (), 'N'), '-sNaN'],
+            ['Infinity', (0, (0, ), 'F'), 'Infinity'],
+            ['-Infinity', (1, (0, ), 'F'), '-Infinity'],
+            ['Inf', (0, (0, ), 'F'), 'Infinity'],
+            ['-Inf', (1, (0, ), 'F'), '-Infinity'],
         ]
         for data in datum:
             self.assertEqual(tuple(Decimal(data[0]).as_tuple()), data[1])
