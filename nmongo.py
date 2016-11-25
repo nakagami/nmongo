@@ -37,17 +37,40 @@ try:
     from decimal import Decimal
 except ImportError:
     # Internal Decimal class for micropython
+    from ucollections import namedtuple
+    DecimalTuple = namedtuple('DecimalTuple', ['sign', 'digits', 'exponent'])
     class Decimal:
         def __init__(self, v):
             if isinstance(v, str):
                 pass
             elif isinstance(v, int):
-                pass
+                if v < 0:
+                    sign = 1
+                    v *= -1
+                else:
+                    sign = 0
+                digits = []
+                if v != 0:
+                    while v != 0:
+                        digits.append(v % 10)
+                        v //= 10
+                    digits.reverse()
+                    digits = tuple(digits)
+                else:
+                    digits = (0, )
             elif isinstance(v, float):
                 pass
             elif isinstance(v, tuple):
                 pass
-            raise TypeError("Cannot convert %r to Decimal" % (v,))
+            else:
+                raise TypeError("Cannot convert %r to Decimal" % (v,))
+
+            self.sign = sign
+            self.digits = digits
+            self.exponent = 0
+
+        def as_tuple(self):
+            return DecimalTuple(self.sign, self.digits, self.exponent)
 
 
 __version__ = '0.2.0'

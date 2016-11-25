@@ -198,8 +198,12 @@ class TestMongo(unittest.TestCase):
         db.close()
 
     def test_decimal(self):
-        self.assertEqual(tuple(Decimal(100).as_tuple()), (0, (1, 0, 0), 0))
-        self.assertEqual(tuple(Decimal(-100).as_tuple()), (1, (1, 0, 0), 0))
+        datum = [
+            [100, (0, (1, 0, 0), 0)],
+            [-100, (1, (1, 0, 0), 0)],
+        ]
+        for data in datum:
+            self.assertEqual(tuple(Decimal(data[0]).as_tuple()), data[1])
 
 if __name__ == "__main__":
     unittest.main()
