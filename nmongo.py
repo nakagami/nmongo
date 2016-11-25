@@ -61,7 +61,7 @@ except ImportError:
             elif isinstance(v, float):
                 pass
             elif isinstance(v, tuple):
-                pass
+                sign, digits, exponent = v
             else:
                 raise TypeError("Cannot convert %r to Decimal" % (v,))
 
