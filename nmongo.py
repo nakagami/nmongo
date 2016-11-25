@@ -42,7 +42,18 @@ except ImportError:
     class Decimal:
         def __init__(self, v):
             if isinstance(v, str):
-                pass
+                t = {
+                    'NaN': (0, 0, 8160),
+                    '-NaN': (1, 0, 8160),
+                    'sNaN': (0, 0, 9184),
+                    '-sNaN': (1, 0, 9184),
+                    'Inf': (0, 0, 6112),
+                    '-Inf': (1, 0, 6112),
+                }.get(v)
+                if t:
+                    sign, digits, exponent = t
+                else:
+                    pass
             elif isinstance(v, int):
                 if v < 0:
                     sign = 1
@@ -58,6 +69,7 @@ except ImportError:
                     digits = tuple(digits)
                 else:
                     digits = (0, )
+                exponent = 0
             elif isinstance(v, float):
                 pass
             elif isinstance(v, tuple):
@@ -67,10 +79,26 @@ except ImportError:
 
             self.sign = sign
             self.digits = digits
-            self.exponent = 0
+            self.exponent = exponent
 
         def as_tuple(self):
             return DecimalTuple(self.sign, self.digits, self.exponent)
+
+        def __repr__(self):
+            return "Decimal('%s')" % (self.__str__(), )
+
+        def __str__(self):
+            v = {
+                (0, 0, 8160): 'NaN',
+                (1, 0, 8160): '-NaN',
+                (0, 0, 9184): 'sNaN',
+                (1, 0, 9184): '-sNaN',
+                (0, 0, 6112): 'Inf',
+                (1, 0, 6112): '-Inf',
+            }.get((self.sign, self.digits, self.exponent))
+            if v:
+                return v
+            return "0"
 
 
 __version__ = '0.2.0'
