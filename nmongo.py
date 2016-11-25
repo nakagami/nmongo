@@ -40,6 +40,24 @@ except ImportError:
     from ucollections import namedtuple
     DecimalTuple = namedtuple('DecimalTuple', ['sign', 'digits', 'exponent'])
     class Decimal:
+        def _int_to_tuple(self, v):
+            if v < 0:
+                sign = 1
+                v *= -1
+            else:
+                sign = 0
+            digits = []
+            if v != 0:
+                while v != 0:
+                    digits.append(v % 10)
+                    v //= 10
+                digits.reverse()
+                digits = tuple(digits)
+            else:
+                digits = (0, )
+            exponent = 0
+            return sign, digits, exponent
+
         def __init__(self, v):
             if isinstance(v, str):
                 t = {
@@ -53,24 +71,23 @@ except ImportError:
                 if t:
                     sign, digits, exponent = t
                 else:
-                    # TODO:
-                    pass
+                    if (len(v) == 0) or (v[0] == '-' and len(v) == 1):
+                        raise ValueError("Decimal(%s)" % (v, ))
+                    if v[0] == '-':
+                        sign = 1
+                        v = v[1:]
+                    else:
+                        sign = 0
+                    i = v.find('.')
+                    if i < 0:
+                        s = v
+                        exponent = 0
+                    else:
+                        s = v[:i] + v[i+1:]
+                        exponent = (len(s) -i) * -1
+                    _, digits, _ = self._int_to_tuple(int(v[:i] + v[i+1:]))
             elif isinstance(v, int):
-                if v < 0:
-                    sign = 1
-                    v *= -1
-                else:
-                    sign = 0
-                digits = []
-                if v != 0:
-                    while v != 0:
-                        digits.append(v % 10)
-                        v //= 10
-                    digits.reverse()
-                    digits = tuple(digits)
-                else:
-                    digits = (0, )
-                exponent = 0
+                sign, digits, exponent = self._int_to_tuple(v)
             elif isinstance(v, float):
                 pass
             elif isinstance(v, tuple):
@@ -89,7 +106,7 @@ except ImportError:
             return "Decimal('%s')" % (self.__str__(), )
 
         def __str__(self):
-            v = {
+            s = {
                 (0, 0, 8160): 'NaN',
                 (1, 0, 8160): '-NaN',
                 (0, 0, 9184): 'sNaN',
@@ -97,10 +114,19 @@ except ImportError:
                 (0, 0, 6112): 'Inf',
                 (1, 0, 6112): '-Inf',
             }.get((self.sign, self.digits, self.exponent))
-            if v:
-                return v
-            # TODO:
-            return "0"
+            if s:
+                return s
+            n = 0
+            for i in self.digits:
+                n = n * 10 + i
+            s = int(n)
+            if sign:
+                s = '-' + s
+            if exponent > 0:
+                s += '0' * exponent
+            elif exponent < 0:
+                s = s[:-exponent] + '.' + s[-exponent:]
+            return s
 
 
 __version__ = '0.2.0'
