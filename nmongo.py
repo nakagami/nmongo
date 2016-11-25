@@ -53,6 +53,7 @@ except ImportError:
                 if t:
                     sign, digits, exponent = t
                 else:
+                    # TODO:
                     pass
             elif isinstance(v, int):
                 if v < 0:
@@ -98,6 +99,7 @@ except ImportError:
             }.get((self.sign, self.digits, self.exponent))
             if v:
                 return v
+            # TODO:
             return "0"
 
 
