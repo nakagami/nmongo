@@ -28,6 +28,10 @@ import unittest
 import datetime
 import time
 import nmongo
+try:
+    from decimal import Decimal
+except ImportError:
+    from nmongo import Decimal
 
 class TestMongo(unittest.TestCase):
     host = 'localhost'
@@ -192,6 +196,10 @@ class TestMongo(unittest.TestCase):
         )
 
         db.close()
+
+    def test_decimal(self):
+        self.assertEqual(tuple(Decimal(100).as_tuple()), (0, (1, 0, 0), 0))
+        self.assertEqual(tuple(Decimal(-100).as_tuple()), (1, (1, 0, 0), 0))
 
 if __name__ == "__main__":
     unittest.main()

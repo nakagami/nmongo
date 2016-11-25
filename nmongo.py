@@ -49,6 +49,7 @@ except ImportError:
                 pass
             raise TypeError("Cannot convert %r to Decimal" % (v,))
 
+
 __version__ = '0.2.0'
 
 
