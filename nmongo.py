@@ -127,7 +127,7 @@ except ImportError:
             if self.exponent > 0:
                 s += '0' * exponent
             elif self.exponent < 0:
-                s = s[:-self.exponent] + '.' + s[-self.exponent:]
+                s = s[:self.exponent] + '.' + s[self.exponent:]
             return s
 
 
