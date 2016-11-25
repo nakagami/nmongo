@@ -199,11 +199,20 @@ class TestMongo(unittest.TestCase):
 
     def test_decimal(self):
         datum = [
-            [100, (0, (1, 0, 0), 0)],
-            [-100, (1, (1, 0, 0), 0)],
+            [100, (0, (1, 0, 0), 0), '100'],
+            [-100, (1, (1, 0, 0), 0), '-100'],
+            ['100', (0, (1, 0, 0), 0), '100'],
+            ['-100', (1, (1, 0, 0), 0), '-100'],
+            ['NaN', (0, 0, 8160), 'NaN'],
+            ['-NaN', (1, 0, 8160), '-NaN'],
+            ['sNaN', (0, 0, 9184), 'sNaN'],
+            ['-sNaN', (1, 0, 9184), '-sNaN'],
+            ['Inf', (0, 0, 6112), 'Inf'],
+            ['-Inf', (1, 0, 6112), '-Inf'],
         ]
         for data in datum:
             self.assertEqual(tuple(Decimal(data[0]).as_tuple()), data[1])
+            self.assertEqual(str(Decimal(data[0])), data[2])
 
 if __name__ == "__main__":
     unittest.main()

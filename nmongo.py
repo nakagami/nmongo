@@ -85,7 +85,7 @@ except ImportError:
                     else:
                         s = v[:i] + v[i+1:]
                         exponent = (len(s) -i) * -1
-                    _, digits, _ = self._int_to_tuple(int(v[:i] + v[i+1:]))
+                    _, digits, _ = self._int_to_tuple(int(s))
             elif isinstance(v, int):
                 sign, digits, exponent = self._int_to_tuple(v)
             elif isinstance(v, float):
@@ -119,13 +119,13 @@ except ImportError:
             n = 0
             for i in self.digits:
                 n = n * 10 + i
-            s = int(n)
-            if sign:
+            s = str(n)
+            if self.sign:
                 s = '-' + s
-            if exponent > 0:
+            if self.exponent > 0:
                 s += '0' * exponent
-            elif exponent < 0:
-                s = s[:-exponent] + '.' + s[-exponent:]
+            elif self.exponent < 0:
+                s = s[:-self.exponent] + '.' + s[-self.exponent:]
             return s
 
 
