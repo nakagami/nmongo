@@ -29,7 +29,6 @@ MicroPython
     $ micropython -m upip install micropython-time
     $ micropython -m upip install micropython-datetime
     $ micropython -m upip install micropython-binascii
-    $ micropython -m upip install micropython-decimal
     $ micropython -m upip install micropython-random
     $ micropython -m upip install nmongo
 
