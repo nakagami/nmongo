@@ -250,7 +250,7 @@ def to_decimal(b):
     }.get((sign, digits, exponent))
     if v:
         return v
-    return Decimal((sign, Decimal(digits).as_tuple()[1],  exponent))
+    return Decimal((sign, Decimal(digits).as_tuple()[1], exponent))
 
 
 def to_uint(b):
