@@ -39,6 +39,7 @@ except ImportError:
     # Internal Decimal class for micropython
     from ucollections import namedtuple
     DecimalTuple = namedtuple('DecimalTuple', ['sign', 'digits', 'exponent'])
+
     class Decimal:
         def _int_to_tuple(self, v):
             if v < 0:
@@ -86,7 +87,7 @@ except ImportError:
                         exponent = 0
                     else:
                         s = v[:i] + v[i+1:]
-                        exponent = (len(s) -i) * -1
+                        exponent = (len(s) - i) * -1
                     _, digits, _ = self._int_to_tuple(int(s))
             elif isinstance(v, int):
                 sign, digits, exponent = self._int_to_tuple(v)
@@ -125,7 +126,7 @@ except ImportError:
             if self.sign:
                 s = '-' + s
             if self.exponent > 0:
-                s += '0' * exponent
+                s += '0' * self.exponent
             elif self.exponent < 0:
                 s = s[:self.exponent] + '.' + s[self.exponent:]
             return s
@@ -198,8 +199,10 @@ def from_int32(n):
 def from_int64(n):
     return _from_int(n, 8)
 
+
 def from_int112(n):
     return _from_int(n, 14)
+
 
 def from_decimal(d):
     "from Decimal to decimal128 binary"
@@ -219,7 +222,7 @@ def from_decimal(d):
         num = num * 10 + n
     fraction = from_int112(num)
     if fraction[-1] & 0b00100000:
-        exponent = (exponent + 6176 ) // 2
+        exponent = (exponent + 6176) // 2
     else:
         exponent = (exponent + 6176) * 2
     exponent = from_int16(exponent)

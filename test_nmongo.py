@@ -33,6 +33,7 @@ try:
 except ImportError:
     from nmongo import Decimal
 
+
 class TestMongo(unittest.TestCase):
     host = 'localhost'
     database = 'test'
@@ -68,7 +69,6 @@ class TestMongo(unittest.TestCase):
         db.pets.insert([data2, data3])
         self.assertIn('pets', db.getCollectionNames())
 
-
         # index
         db.pets.createIndex(
             {'name': 1, 'gender': -1},
@@ -83,7 +83,7 @@ class TestMongo(unittest.TestCase):
             [idx['name'] for idx in db.pets.getIndexes()]
         )
         db.pets.dropIndex('named_pets_index')
-        self.assertTrue(not 'named_pets_index' in [idx['name'] for idx in db.pets.getIndexes()])
+        self.assertTrue('named_pets_index' not in [idx['name'] for idx in db.pets.getIndexes()])
         self.assertEqual(len(db.pets.getIndexes()), 2)
 
         db.pets.dropIndexes()
@@ -103,17 +103,17 @@ class TestMongo(unittest.TestCase):
             db.pets.mapReduce(
                 "function(){}",             # map
                 "function(key, values){}",  # reduce
-                {'out': {'inline':1}}
+                {'out': {'inline': 1}}
             )['ok']
         )
 
         # group
         self.assertTrue(
             db.pets.group(
-                {'name':1, 'gender':1},     # key
+                {'name': 1, 'gender': 1},     # key
                 "function (c, r) {}",       # reduce
                 {},                         # initial
-                cond={'gender' : 'm'},
+                cond={'gender': 'm'},
             )['ok']
         )
 
@@ -123,7 +123,7 @@ class TestMongo(unittest.TestCase):
 
         self.assertEqual(db.pets.count(), 3)
 
-        self.assertEqual(set(db.pets.distinct('gender')), set(['m','f']))
+        self.assertEqual(set(db.pets.distinct('gender')), set(['m', 'f']))
 
         # findAndModify
         prev_data1 = db.pets.findAndModify(
@@ -165,13 +165,12 @@ class TestMongo(unittest.TestCase):
         self.assertEqual(r['n'], 3)
         self.assertEqual(r['nModified'], 3)
         r = db.pets.updateMany(
-            {'name': {'$eq': 'Kitty'}}, # query
-            {'$set': {'gender': 'f'}},  # update
+            {'name': {'$eq': 'Kitty'}},     # query
+            {'$set': {'gender': 'f'}},      # update
         )
         self.assertTrue(r['ok'])
         self.assertEqual(r['n'], 1)
         self.assertEqual(r['nModified'], 0)
-
 
         # Delete
         self.assertEqual(db.pets.count(), 3)
