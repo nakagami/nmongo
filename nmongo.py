@@ -703,7 +703,6 @@ class MongoCollection:
         r = self.db.runCommand({
             'createIndexes': self.name,
             'indexes': [index],
-            'ns': '.'.join([self.db.database, self.name]),
         })
         if r['ok']:
             return r
