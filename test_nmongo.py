@@ -36,7 +36,7 @@ except ImportError:
 
 class TestMongo(unittest.TestCase):
     host = 'localhost'
-    database = 'test'
+    database = 'test_nmongo'
     port = 27017
 
     def test_nmongo(self):
