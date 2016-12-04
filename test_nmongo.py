@@ -47,14 +47,17 @@ class TestMongo(unittest.TestCase):
     def test_nmongo(self):
         db = nmongo.connect(self.host, self.database,  port=self.port)
         r = db.pets.drop()
+        mongo_version = [int(n) for n in db.serverBuildInfo()['version'].split('.')]
 
         data1 = {
             'name': 'Kitty',
             'gender': 'f',
             'age': 0,
             'species': 'cat',
-            'weight': Decimal("123.4"),
         }
+        if mongo_version > [3, 2]:
+            data1['weight'] = Decimal("123.4")
+
         if sys.implementation.name != 'micropython':
             data1['birth'] = datetime.datetime(1974, 11, 1, 1, 1)
         data2 = {
@@ -62,15 +65,17 @@ class TestMongo(unittest.TestCase):
             'gender': 'm',
             'age': 0,
             'species': 'cat',
-            'weight': Decimal("1234.0"),
         }
+        if mongo_version > [3, 2]:
+            data2['weight'] = Decimal("1234.0")
         data3 = {
             'name': 'Kuri',
             'gender': 'm',
             'age': 0,
             'species': 'ferret',
-            'weight': Decimal("NaN"),
         }
+        if mongo_version > [3, 2]:
+            data3['weight'] = Decimal("NaN")
 
         # Create
         db.pets.insert(data1)
