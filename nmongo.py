@@ -105,6 +105,9 @@ except ImportError:
         def as_tuple(self):
             return DecimalTuple(self.sign, self.digits, self.exponent)
 
+        def __eq__(self, v):
+            return self.as_tuple() == v.as_tuple()
+
         def __repr__(self):
             return "Decimal('%s')" % (self.__str__(), )
 

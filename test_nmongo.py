@@ -39,6 +39,11 @@ class TestMongo(unittest.TestCase):
     database = 'test_nmongo'
     port = 27017
 
+    def assertEqualDict(self, d1, d2):
+        self.assertEqual(set(d1.keys()), set(d2.keys()))
+        for k,v in d1.items():
+            self.assertEqual(d2.get(k), v)
+
     def test_nmongo(self):
         db = nmongo.connect(self.host, self.database,  port=self.port)
         r = db.pets.drop()
@@ -47,7 +52,8 @@ class TestMongo(unittest.TestCase):
             'name': 'Kitty',
             'gender': 'f',
             'age': 0,
-            'species': 'cat'
+            'species': 'cat',
+            'weight': Decimal("123.4"),
         }
         if sys.implementation.name != 'micropython':
             data1['birth'] = datetime.datetime(1974, 11, 1, 1, 1)
@@ -55,13 +61,15 @@ class TestMongo(unittest.TestCase):
             'name': 'Snoopy',
             'gender': 'm',
             'age': 0,
-            'species': 'cat'
+            'species': 'cat',
+            'weight': Decimal("1234.0"),
         }
         data3 = {
             'name': 'Kuri',
             'gender': 'm',
             'age': 0,
-            'species': 'ferret'
+            'species': 'ferret',
+            'weight': Decimal("NaN"),
         }
 
         # Create
@@ -119,7 +127,7 @@ class TestMongo(unittest.TestCase):
 
         # Read
         cur = db.pets.find(projection={'_id': 0})
-        self.assertEqual(cur.fetchone(), data1)
+        self.assertEqualDict(cur.fetchone(), data1)
 
         self.assertEqual(db.pets.count(), 3)
 
@@ -140,7 +148,7 @@ class TestMongo(unittest.TestCase):
         )
         self.assertTrue(r['ok'])
         self.assertEqual(r['nModified'], 1)
-        self.assertEqual(
+        self.assertEqualDict(
             db.pets.findOne({'name': 'Snoopy'}, projection={'_id': 0}),
             {'name': 'Snoopy', 'gender': 'f', 'age': 10, 'species': 'wolf'},
         )
