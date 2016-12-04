@@ -9,7 +9,7 @@ It has mongo Shell like APIs.
 Requirement
 ------------
 
-- MongoDB 3.2
+- MongoDB 3.2, 3.4
 - CPython 3.4+ https://www.python.org or MicroPython https://micropython.org 
 
 Install
