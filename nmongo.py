@@ -1072,6 +1072,13 @@ class MongoDatabase:
         params['create'] = name
         return self.runCommand(params)
 
+    def createView(self, viewname, collectionname, pipeline):
+        params = {}
+        params['create'] = viewname
+        params['viewOn'] = collectionname
+        params['pipeline'] = pipeline
+        return self.runCommand(params)
+
     def dropDatabase(self):
         return self.runCommand({'dropDatabase': 1.0})
 
