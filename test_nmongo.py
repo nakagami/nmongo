@@ -47,7 +47,7 @@ class TestMongo(unittest.TestCase):
     def test_nmongo(self):
         db = nmongo.connect(self.host, self.database,  port=self.port)
         r = db.pets.drop()
-        mongo_version = [int(n) for n in db.serverBuildInfo()['version'].split('.')][:2]
+        mongo_version = [int(n) for n in db.version().split('.')][:2]
 
         data1 = {
             'name': 'Kitty',
