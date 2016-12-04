@@ -490,6 +490,9 @@ COMMANDS = set([
     # Sharding Commands
     'flushRouterConfig',
     'addShard',
+    'balancerStart',
+    'balancerStatus',
+    'balancerStop',
     'cleanupOrphaned',
     'checkShardingIndex',
     'enableSharding',
@@ -509,6 +512,9 @@ COMMANDS = set([
     'moveChunk',
     'movePrimary',
     'isdbgrid',
+    'addShardToZone',
+    'removeShardFromZone',
+    'updateZoneKeyRange',
     # Instance Administration Commands
     'renameCollection',
     'copydb',
@@ -539,6 +545,7 @@ COMMANDS = set([
     'shutdown',
     'logRotate',
     'killOp',
+    'setFeatureCompatibilityVersion',
     # Diagnostic Commands
     'availableQueryOptions',
     'buildInfo',
