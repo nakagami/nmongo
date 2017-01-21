@@ -1022,9 +1022,12 @@ class MongoDatabase:
         self.port = port
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self.host, self.port))
-        if ssl and ca_certs:
+        if ssl:
             import ssl
-            self._sock = ssl.wrap_socket(self._sock, ca_certs=ca_certs)
+            if ca_certs:
+                self._sock = ssl.wrap_socket(self._sock, ca_certs=ca_certs)
+            else:
+                self._sock = ssl.wrap_socket(self._sock, cert_reqs=ssl.CERT_NONE)
 
         self._request_id = 0
 
