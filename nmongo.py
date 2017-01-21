@@ -1016,12 +1016,16 @@ class MongoDatabase:
     def _get_time_bytes(self):
         return bytes(reversed(from_int32(int(time.time()))))
 
-    def __init__(self, host, database, port=27017):
+    def __init__(self, host, database, port=27017, ssl=False, ca_certs=None):
         self.host = host
         self.database = database
         self.port = port
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self.host, self.port))
+        if ssl and ca_certs:
+            import ssl
+            self._sock = ssl.wrap_socket(self._sock, ca_certs=ca_certs)
+
         self._request_id = 0
 
         if sys.implementation.name != 'micropython':
@@ -1163,5 +1167,5 @@ class MongoDatabase:
         self._sock.close()
 
 
-def connect(host, database, port=27017):
-    return MongoDatabase(host, database, port)
+def connect(host, database, port=27017, ssl=False, ca_certs=None):
+    return MongoDatabase(host, database, port, ssl, ca_certs)
