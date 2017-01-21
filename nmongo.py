@@ -1016,7 +1016,7 @@ class MongoDatabase:
     def _get_time_bytes(self):
         return bytes(reversed(from_int32(int(time.time()))))
 
-    def __init__(self, host, database, port=27017, ssl=False, ca_certs=None):
+    def __init__(self, host, database, port=27017, ssl=False, ssl_ca_certs=None):
         self.host = host
         self.database = database
         self.port = port
@@ -1024,8 +1024,8 @@ class MongoDatabase:
         self._sock.connect((self.host, self.port))
         if ssl:
             import ssl
-            if ca_certs:
-                self._sock = ssl.wrap_socket(self._sock, ca_certs=ca_certs)
+            if ssl_ca_certs:
+                self._sock = ssl.wrap_socket(self._sock, ca_certs=ssl_ca_certs)
             else:
                 self._sock = ssl.wrap_socket(self._sock, cert_reqs=ssl.CERT_NONE)
 
@@ -1172,5 +1172,5 @@ class MongoDatabase:
         self._sock.close()
 
 
-def connect(host, database, port=27017, ssl=False, ca_certs=None):
-    return MongoDatabase(host, database, port, ssl, ca_certs)
+def connect(host, database, port=27017, ssl=False, ssl_ca_certs=None):
+    return MongoDatabase(host, database, port, ssl, ssl_ca_certs)

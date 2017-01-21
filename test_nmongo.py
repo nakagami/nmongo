@@ -39,7 +39,7 @@ class TestMongo(unittest.TestCase):
     database = 'test_nmongo'
     port = 27017
     ssl = False
-    ca_certs = '/etc/ssl/mongodb-cert.crt'
+    ssl_ca_certs = '/etc/ssl/mongodb-cert.crt'
 
     def assertEqualDict(self, d1, d2):
         self.assertEqual(set(d1.keys()), set(d2.keys()))
@@ -47,7 +47,7 @@ class TestMongo(unittest.TestCase):
             self.assertEqual(d2.get(k), v)
 
     def test_nmongo(self):
-        db = nmongo.connect(self.host, self.database, port=self.port, ssl=self.ssl, ca_certs=self.ca_certs)
+        db = nmongo.connect(self.host, self.database, port=self.port, ssl=self.ssl, ssl_ca_certs=self.ssl_ca_certs)
         r = db.pets.drop()
         mongo_version = [int(n) for n in db.version().split('.')][:2]
 
