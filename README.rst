@@ -26,6 +26,7 @@ MicroPython
 
     $ micropython -m upip install micropython-errno
     $ micropython -m upip install micropython-os
+    $ micropython -m upip install micropython-socket
     $ micropython -m upip install micropython-time
     $ micropython -m upip install micropython-datetime
     $ micropython -m upip install micropython-binascii

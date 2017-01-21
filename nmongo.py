@@ -135,7 +135,7 @@ except ImportError:
             return s
 
 
-__version__ = '0.2.2'
+__version__ = '0.3.0'
 
 
 class OperationalError(Exception):
@@ -1079,11 +1079,13 @@ class MongoDatabase:
         params['create'] = name
         return self.runCommand(params)
 
-    def createView(self, viewname, collectionname, pipeline):
+    def createView(self, viewname, collectionname, pipeline, collation=None):
         params = {}
         params['create'] = viewname
         params['viewOn'] = collectionname
         params['pipeline'] = pipeline
+        if collation is not None:
+            params['collation'] = collation
         return self.runCommand(params)
 
     def dropDatabase(self):
