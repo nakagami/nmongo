@@ -398,10 +398,11 @@ def bson_decode(b):
         return {}, b''
     ln = to_uint(b[:4])
     rest = b[ln:]
-    assert b[ln-1] == 0
-    b = b[4:ln-1]
+    b = b[4:ln]
     d = {}
     while b:
+        if b[0] == 0:
+            break
         k, v, b = _bson_decode_key_value(b)
         d[k] = v
     return d, rest
@@ -590,6 +591,7 @@ COMMANDS = set([
     'writebacklisten',
     # Auditing Commands
     'logApplicationMessage',
+    'saslStart',
 ])
 
 
