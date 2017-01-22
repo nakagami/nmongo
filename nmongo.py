@@ -345,7 +345,6 @@ def _bson_decode_item(t, b):
         assert b[4] == 0    # Generic binary subtype
         v = b[5:5+ln]
         rest = b[5+ln:]
-        v, _ = bson_decode(b)
     elif t == 0x07:     # ObjectId
         v = ObjectId(b[:12])
         rest = b[12:]
