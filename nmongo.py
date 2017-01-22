@@ -342,7 +342,7 @@ def _bson_decode_item(t, b):
         rest = b
     elif t == 0x05:     # binary
         ln = to_uint(b[:4])
-        assert b[4] == 0    # Generic binary subtype
+        # assert b[4] == 0    # Generic binary subtype
         v = b[5:5+ln]
         rest = b[5+ln:]
     elif t == 0x07:     # ObjectId
