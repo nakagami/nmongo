@@ -342,8 +342,9 @@ def _bson_decode_item(t, b):
         rest = b
     elif t == 0x05:     # binary
         ln = to_uint(b[:4])
-        v = b[4:4+ln-1]
-        rest = b[4+ln:]
+        assert b[4] == 0    # Generic binary subtype
+        v = b[5:5+ln]
+        rest = b[5+ln:]
         v, _ = bson_decode(b)
     elif t == 0x07:     # ObjectId
         v = ObjectId(b[:12])
@@ -398,11 +399,10 @@ def bson_decode(b):
         return {}, b''
     ln = to_uint(b[:4])
     rest = b[ln:]
-    b = b[4:ln]
+    assert b[ln-1] == 0
+    b = b[4:ln-1]
     d = {}
     while b:
-        if b[0] == 0:
-            break
         k, v, b = _bson_decode_key_value(b)
         d[k] = v
     return d, rest
