@@ -1061,7 +1061,7 @@ class MongoDatabase:
             raise AttributeError
         return MongoCollection(self, name)
 
-    def authenticate(self, user, password):
+    def auth(self, user, password):
         # TODO: SASL authentication
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst
         pass
