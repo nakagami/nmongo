@@ -591,6 +591,7 @@ COMMANDS = set([
     # Auditing Commands
     'logApplicationMessage',
     'saslStart',
+    'saslContinue',
 ])
 
 
@@ -1059,6 +1060,11 @@ class MongoDatabase:
         if name[0] == '_':
             raise AttributeError
         return MongoCollection(self, name)
+
+    def authenticate(self, user, password):
+        # TODO: SASL authentication
+        # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst
+        pass
 
     def genObjectId(self):
         self._object_id_counter = (self._object_id_counter + 1) & 0xffffff
