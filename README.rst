@@ -120,10 +120,11 @@ Common
 ~~~~~~~~
 
 - GridFS
-- ssl
+- authentication
 
 MicroPython
 ~~~~~~~~~~~~
 
+- ssl
 - datetime.datetime
 - time.struct_time
