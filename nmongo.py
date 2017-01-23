@@ -28,6 +28,7 @@ import datetime
 import time
 import binascii
 import struct
+import string
 import random
 try:
     import hashlib
@@ -278,6 +279,8 @@ def _bson_encode_item(ename, v):
         v = {str(i): v[i] for i in range(len(v))}
         v = _bson_encode_dict(v) + b'\x00'
         b = b'\x04' + to_cstring(ename) + from_int32(len(v) + 4) + v
+    elif t in (bytes, ):
+        b = b'\x05' + to_cstring(ename) + from_int32(len(v)) + b'\x00' + v
     elif t == ObjectId:
         b = b'\x07' + to_cstring(ename) + v.to_bytes()
     elif t == int:
@@ -1062,9 +1065,31 @@ class MongoDatabase:
         return MongoCollection(self, name)
 
     def auth(self, user, password):
-        # TODO: SASL authentication
-        # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst
-        pass
+        # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
+        import hashlib
+        m = hashlib.md5()
+        m.update((user + ':mongo:' + password).encode('utf-8'))
+        password = m.hexdigest()
+        nonce = ''
+        while len(nonce) < 32:
+            c = random.choice(string.ascii_letters + string.digits + string.punctuation)
+            if c != ',':
+                nonce += c
+        payload = ('n,,n=%s,r=%s' % (user, nonce)).encode('utf-8')
+
+        r = self.runCommand({
+            'saslStart': 1.0,
+            'mechanism': 'SCRAM-SHA-1',
+            'payload': payload,
+        })
+        if not r['ok']:
+            raise OperationalError(r['errmsg'])
+        reply_payload = {s[0]: s[2:] for s in r['payload'].decode('utf-8').split(',')}
+        reply_payload['i'] = int(reply_payload['i'])
+        assert reply_payload['r'][:len(nonce)] == nonce
+
+        print(nonce)
+        print(reply_payload)
 
     def genObjectId(self):
         self._object_id_counter = (self._object_id_counter + 1) & 0xffffff
