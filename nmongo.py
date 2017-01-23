@@ -28,7 +28,6 @@ import datetime
 import time
 import binascii
 import struct
-import string
 import random
 try:
     import hashlib
@@ -1068,6 +1067,7 @@ class MongoDatabase:
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
         import base64
         import hmac
+        import string
         m = hashlib.md5()
         m.update((user + ':mongo:' + password).encode('utf-8'))
         password = m.hexdigest()
