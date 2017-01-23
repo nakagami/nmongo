@@ -1095,9 +1095,13 @@ class MongoDatabase:
             reply_payload['i'],
         )
         client_key = hmac.HMAC(salted_pass, b"Client Key", hashlib.sha1).digest()
-        auth_msg = "n=%s,r=%s,%s,c=biws,r=%s" % (user, nonce, r['payload'], reply_payload['r'])
+        auth_msg = b"n=%s,r=%s,%s,c=biws,r=%s" % (
+            user.encode('utf-8'),
+            nonce.encode('utf-8'),r['payload'],
+            reply_payload['r'].encode('utf-8'),
+        )
         client_sig = hmac.HMAC(
-            hashlib.sha1(client_key).digest(), auth_msg.encode('utf-8'), hashlib.sha1
+            hashlib.sha1(client_key).digest(), auth_msg, hashlib.sha1
         ).digest()
         proof = base64.standard_b64encode(
             b"".join([bytes([x ^ y]) for x, y in zip(client_key, client_sig)])
@@ -1106,7 +1110,7 @@ class MongoDatabase:
 
         server_key = hmac.HMAC(salted_pass, b"Server Key", hashlib.sha1).digest()
         server_sig = base64.standard_b64encode(
-            hmac.HMAC(server_key, auth_msg.encode('utf-8'), hashlib.sha1).digest()
+            hmac.HMAC(server_key, auth_msg, hashlib.sha1).digest()
         )
 
         r = self.runCommand({
