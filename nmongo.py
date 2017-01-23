@@ -1108,10 +1108,13 @@ class MongoDatabase:
         )
         payload = ("c=biws,r=%s,p=" % reply_payload['r']).encode('utf-8') + proof
 
-        server_key = hmac.HMAC(salted_pass, b"Server Key", hashlib.sha1).digest()
         server_sig = base64.standard_b64encode(
-            hmac.HMAC(server_key, auth_msg, hashlib.sha1).digest()
-        )
+            hmac.HMAC(
+                hmac.HMAC(salted_pass, b"Server Key", hashlib.sha1).digest(),
+                auth_msg,
+                hashlib.sha1
+            ).digest()
+        ).decode('utf-8')
 
         r = self.runCommand({
             'saslContinue': 1.0,
@@ -1122,7 +1125,7 @@ class MongoDatabase:
             raise OperationalError(r['errmsg'])
         reply_payload = {s[0]: s[2:] for s in r['payload'].decode('utf-8').split(',')}
 
-        assert reply_payload['v'].encode('utf-8') == server_sig
+        assert reply_payload['v'] == server_sig
 
         if not r['done']:
             r = self.runCommand({
