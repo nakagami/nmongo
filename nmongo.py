@@ -1066,7 +1066,8 @@ class MongoDatabase:
 
     def auth(self, user, password):
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
-        import hashlib
+        import base64
+        import hmac
         m = hashlib.md5()
         m.update((user + ':mongo:' + password).encode('utf-8'))
         password = m.hexdigest()
@@ -1075,12 +1076,11 @@ class MongoDatabase:
             c = random.choice(string.ascii_letters + string.digits + string.punctuation)
             if c != ',':
                 nonce += c
-        payload = ('n,,n=%s,r=%s' % (user, nonce)).encode('utf-8')
 
         r = self.runCommand({
             'saslStart': 1.0,
             'mechanism': 'SCRAM-SHA-1',
-            'payload': payload,
+            'payload': ('n,,n=%s,r=%s' % (user, nonce)).encode('utf-8'),
         })
         if not r['ok']:
             raise OperationalError(r['errmsg'])
@@ -1088,8 +1088,35 @@ class MongoDatabase:
         reply_payload['i'] = int(reply_payload['i'])
         assert reply_payload['r'][:len(nonce)] == nonce
 
-        print(nonce)
-        print(reply_payload)
+        salted_pass = hashlib.pbkdf2_hmac(
+            'sha1',
+            password.encode('utf-8'),
+            base64.standard_b64decode(reply_payload['s']),
+            reply_payload['i'],
+        )
+        client_key = hmac.HMAC(salted_pass, b"Client Key", hashlib.sha1).digest()
+        auth_msg = "n=%s,r=%s,%s,c=biws,r=%s" % (user, nonce, r['payload'], reply_payload['r'])
+        client_sig = hmac.HMAC(
+            hashlib.sha1(client_key).digest(), auth_msg.encode('utf-8'), hashlib.sha1
+        ).digest()
+        proof = base64.standard_b64encode(
+            b"".join([bytes([x ^ y]) for x, y in zip(client_key, client_sig)])
+        )
+        payload = ("c=biws,r=%s,p=" % reply_payload['r']).encode('utf-8') + proof
+
+        server_key = hmac.HMAC(salted_pass, b"Server Key", hashlib.sha1).digest()
+        server_sig = base64.standard_b64encode(
+            hmac.HMAC(server_key, auth_msg.encode('utf-8'), hashlib.sha1).digest()
+        )
+
+        r = self.runCommand({
+            'saslContinue': 1.0,
+            'conversationId': r['conversationId'],
+            'payload': payload,
+        })
+        if not r['ok']:
+            raise OperationalError(r['errmsg'])
+
 
     def genObjectId(self):
         self._object_id_counter = (self._object_id_counter + 1) & 0xffffff
