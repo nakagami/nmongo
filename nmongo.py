@@ -1120,7 +1120,18 @@ class MongoDatabase:
         })
         if not r['ok']:
             raise OperationalError(r['errmsg'])
+        reply_payload = {s[0]: s[2:] for s in r['payload'].decode('utf-8').split(',')}
 
+        assert reply_payload['v'].encode('utf-8') == server_sig
+
+        if not r['done']:
+            r = self.runCommand({
+                'saslContinue': 1.0,
+                'conversationId': r['conversationId'],
+                'payload': b'',
+            })
+            if not r['ok']:
+                raise OperationalError(r['errmsg'])
 
     def genObjectId(self):
         self._object_id_counter = (self._object_id_counter + 1) & 0xffffff
