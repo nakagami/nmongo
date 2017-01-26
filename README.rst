@@ -46,6 +46,34 @@ Connect to Database
    >>> db = nmongo.connect('servername', 'somewhatdatabase')
    >>>
 
+SSL connection
+~~~~~~~~~~~~~~~~~~~~
+
+::
+
+   >>> import nmongo
+   >>> db = nmongo.connect('servername', 'somewhatdatabase', ssl=True)
+   >>>
+
+or
+
+::
+
+   >>> import nmongo
+   >>> db = nmongo.connect('servername', 'somewhatdatabase', ssl=True, ssl_ca_certs='/path/to/something-cert.crt)
+   >>>
+
+
+User Authentication
+~~~~~~~~~~~~~~~~~~~~
+
+::
+
+   >>> import nmongo
+   >>> db = nmongo.connect('servername', 'somewhatdatabase')
+   >>> db.auth('user', 'password')
+   >>>
+
 Create
 ~~~~~~~
 
