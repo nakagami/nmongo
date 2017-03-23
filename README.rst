@@ -4,13 +4,18 @@ nmongo
 
 MongoDB client for CPython and MicroPython.
 
-It has mongo Shell like APIs.
+It has mongo shell like APIs.
 
-Requirement
-------------
+Support platform
+------------------
+
+- CPython 3.4+ https://www.python.org
+- MicroPython (unix) http://docs.micropython.org/en/latest/unix/
+
+Support database
+------------------
 
 - MongoDB 3.2, 3.4
-- CPython 3.4+ https://www.python.org or MicroPython https://micropython.org 
 
 Install
 ----------
