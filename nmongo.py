@@ -1031,7 +1031,7 @@ class MongoDatabase:
             if ssl_ca_certs:
                 self._sock = ssl.wrap_socket(self._sock, ca_certs=ssl_ca_certs)
             else:
-                self._sock = ssl.wrap_socket(self._sock, cert_reqs=ssl.CERT_NONE)
+                self._sock = ssl.wrap_socket(self._sock)
 
         self._request_id = 0
 
