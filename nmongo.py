@@ -1020,9 +1020,11 @@ class MongoDatabase:
     def _get_time_bytes(self):
         return bytes(reversed(from_int32(int(time.time()))))
 
-    def __init__(self, host, database, port=27017, use_ssl=False, ssl_ca_certs=None):
+    def __init__(self, host, database, user, password, port, use_ssl, ssl_ca_certs):
         self.host = host
         self.database = database
+        self.user = user
+        self.password = password
         self.port = port
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self.host, self.port))
@@ -1042,6 +1044,10 @@ class MongoDatabase:
             sha1.update(self._get_time_bytes())
             self._object_id_counter = to_uint(sha1.digest()[:3])
         self._process_id_bytes = bytes(reversed(from_int32(os.getpid())[:2]))
+
+        if self.user is not None:
+            self.auth(self.user, self.password)
+
         self._machine_id_bytes = self._get_machine_id_bytes()
 
     def _send(self, b):
@@ -1068,26 +1074,22 @@ class MongoDatabase:
         import base64
         import hmac
         import string
-        m = hashlib.md5()
-        m.update((user + ':mongo:' + password).encode('utf-8'))
-        password = m.hexdigest()
-        nonce = ''
-        while len(nonce) < 32:
-            c = random.choice(string.ascii_letters + string.digits + string.punctuation)
-            if c != ',':
-                nonce += c
-
+        printable = string.ascii_letters + string.digits + '+/'
+        nonce = ''.join(random.choice(printable) for i in range(32))
         r = self.runCommand({
             'saslStart': 1.0,
             'mechanism': 'SCRAM-SHA-1',
             'payload': ('n,,n=%s,r=%s' % (user, nonce)).encode('utf-8'),
-        })
+        }, database='admin')
         if not r['ok']:
             raise OperationalError(r['errmsg'])
         reply_payload = {s[0]: s[2:] for s in r['payload'].decode('utf-8').split(',')}
         reply_payload['i'] = int(reply_payload['i'])
         assert reply_payload['r'][:len(nonce)] == nonce
 
+        m = hashlib.md5()
+        m.update((user + ':mongo:' + password).encode('utf-8'))
+        password = m.hexdigest()
         salted_pass = hashlib.pbkdf2_hmac(
             'sha1',
             password.encode('utf-8'),
@@ -1120,7 +1122,7 @@ class MongoDatabase:
             'saslContinue': 1.0,
             'conversationId': r['conversationId'],
             'payload': payload,
-        })
+        }, database='admin')
         if not r['ok']:
             raise OperationalError(r['errmsg'])
         reply_payload = {s[0]: s[2:] for s in r['payload'].decode('utf-8').split(',')}
@@ -1132,7 +1134,7 @@ class MongoDatabase:
                 'saslContinue': 1.0,
                 'conversationId': r['conversationId'],
                 'payload': b'',
-            })
+            }, database='admin')
             if not r['ok']:
                 raise OperationalError(r['errmsg'])
 
@@ -1249,5 +1251,5 @@ class MongoDatabase:
         self._sock.close()
 
 
-def connect(host, database, port=27017, use_ssl=False, ssl_ca_certs=None):
-    return MongoDatabase(host, database, port, use_ssl, ssl_ca_certs)
+def connect(host, database, user=None, password='', port=27017, use_ssl=False, ssl_ca_certs=None):
+    return MongoDatabase(host, database, user, password, port, use_ssl, ssl_ca_certs)
