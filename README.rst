@@ -57,7 +57,7 @@ SSL connection
 ::
 
    >>> import nmongo
-   >>> db = nmongo.connect('servername', 'somewhatdatabase', ssl=True)
+   >>> db = nmongo.connect('servername', 'somewhatdatabase', use_ssl=True)
    >>>
 
 or
@@ -65,7 +65,7 @@ or
 ::
 
    >>> import nmongo
-   >>> db = nmongo.connect('servername', 'somewhatdatabase', ssl=True, ssl_ca_certs='/path/to/something-cert.crt)
+   >>> db = nmongo.connect('servername', 'somewhatdatabase', use_ssl=True, ssl_ca_certs='/path/to/something-cert.crt)
    >>>
 
 
@@ -75,8 +75,7 @@ User Authentication
 ::
 
    >>> import nmongo
-   >>> db = nmongo.connect('servername', 'somewhatdatabase')
-   >>> db.auth('user', 'password')
+   >>> db = nmongo.connect('servername', 'somewhatdatabase', user='user', password='password')
    >>>
 
 Create
