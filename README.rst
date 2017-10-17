@@ -72,6 +72,8 @@ or
 User Authentication
 ~~~~~~~~~~~~~~~~~~~~
 
+Sorry, not suported by micropython.
+
 ::
 
    >>> import nmongo
