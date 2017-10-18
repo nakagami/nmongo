@@ -1074,7 +1074,7 @@ class MongoDatabase:
         import base64
         import hmac
         import string
-        if sys.implementation.name != 'micropython':
+        if sys.implementation.name == 'micropython':
             raise NotImplementedError()
         printable = string.ascii_letters + string.digits + '+/'
         nonce = ''.join(random.choice(printable) for i in range(32))
