@@ -1045,7 +1045,7 @@ class MongoDatabase:
             self._object_id_counter = to_uint(sha1.digest()[:3])
         self._process_id_bytes = bytes(reversed(from_int32(os.getpid())[:2]))
 
-        if self.user is not None:
+        if self.user:
             self.auth(self.user, self.password)
 
         self._machine_id_bytes = self._get_machine_id_bytes()
