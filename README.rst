@@ -36,6 +36,7 @@ MicroPython
     $ micropython -m upip install micropython-datetime
     $ micropython -m upip install micropython-binascii
     $ micropython -m upip install micropython-random
+    $ micropython -m upip install micropython-struct
     $ micropython -m upip install nmongo
 
 
