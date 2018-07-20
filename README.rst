@@ -29,15 +29,18 @@ CPython
 MicroPython
 ::
 
-    $ micropython -m upip install micropython-errno
-    $ micropython -m upip install micropython-os
-    $ micropython -m upip install micropython-socket
-    $ micropython -m upip install micropython-time
-    $ micropython -m upip install micropython-datetime
-    $ micropython -m upip install micropython-binascii
-    $ micropython -m upip install micropython-random
-    $ micropython -m upip install micropython-struct
-    $ micropython -m upip install nmongo
+   $ micropython -m upip install micropython-errno \
+       micropython-os \
+       micropython-socket \
+       micropython-time \
+       micropython-datetime \
+       micropython-binascii \
+       micropython-random \
+       micropython-struct \
+       micropython-unitttest
+
+   $ micropython -m upip install nmongo
+
 
 
 Example
