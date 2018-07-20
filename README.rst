@@ -37,7 +37,10 @@ MicroPython
        micropython-binascii \
        micropython-random \
        micropython-struct \
-       micropython-unitttest
+       micropython-base64 \
+       micropython-hashlib \
+       micropython-hmac \
+       micropython-unittest
 
    $ micropython -m upip install nmongo
 
