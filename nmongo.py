@@ -1079,10 +1079,9 @@ class MongoDatabase:
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
         import base64
         import hmac
-        import string
         if sys.implementation.name == 'micropython':
             raise NotImplementedError()
-        printable = string.ascii_letters + string.digits + '+/'
+        printable = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/'
         nonce = ''.join(random.choice(printable) for i in range(32))
         r = self.runCommand({
             'saslStart': 1.0,
