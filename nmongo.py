@@ -275,8 +275,7 @@ def _bson_encode_item(ename, v):
         v = _bson_encode_dict(v) + b'\x00'
         b = b'\x03' + to_cstring(ename) + from_int32(len(v) + 4) + v
     elif t in (list, tuple):
-        v = {str(i): v[i] for i in range(len(v))}
-        v = _bson_encode_dict(v) + b'\x00'
+        v = _bson_encode_list(v) + b'\x00'
         b = b'\x04' + to_cstring(ename) + from_int32(len(v) + 4) + v
     elif t in (bytes, ):
         b = b'\x05' + to_cstring(ename) + from_int32(len(v)) + b'\x00' + v
@@ -315,6 +314,13 @@ def _bson_encode_dict(d, first_key=None):
         del d[first_key]
     for k, v in d.items():
         b += _bson_encode_item(k, v)
+    return b
+
+
+def _bson_encode_list(a):
+    b = bytearray()
+    for i in range(len(a)):
+        b += _bson_encode_item(str(i), a[i])
     return b
 
 
