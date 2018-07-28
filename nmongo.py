@@ -1102,7 +1102,7 @@ class MongoDatabase:
         password = m.hexdigest()
 
         # calc salted_pass
-        if sys.implementation.name != 'micropython':
+        if sys.implementation.name == 'micropython':
             def _digest(msg):
                 mac = hmac.HMAC(password.encode('utf-8'), None, hashlib.sha1)
                 mac.update(msg)
