@@ -1079,6 +1079,14 @@ class MongoDatabase:
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
         import base64
         import hmac
+
+        def _digest(msg):
+            mac = hmac.HMAC(password.encode('utf-8'), None, hashlib.sha1)
+            mac.update(msg)
+            return mac.digest()
+
+        md5 = hashlib.md5
+
         if sys.implementation.name == 'micropython':
             raise NotImplementedError()
         printable = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/'
@@ -1094,15 +1102,18 @@ class MongoDatabase:
         reply_payload['i'] = int(reply_payload['i'])
         assert reply_payload['r'][:len(nonce)] == nonce
 
-        m = hashlib.md5()
+        m = md5()
         m.update((user + ':mongo:' + password).encode('utf-8'))
         password = m.hexdigest()
-        salted_pass = hashlib.pbkdf2_hmac(
-            'sha1',
-            password.encode('utf-8'),
-            base64.standard_b64decode(reply_payload['s']),
-            reply_payload['i'],
-        )
+
+        # calc salted_pass
+        _u1 = _digest(base64.standard_b64decode(reply_payload['s']) + b'\x00\x00\x00\x01')
+        _ui = int.from_bytes(_u1, 'big')
+        for _ in range(reply_payload['i'] - 1):
+            _u1 = _digest(_u1)
+            _ui ^= int.from_bytes(_u1, 'big')
+        salted_pass = int.to_bytes(_ui, 20, 'big')  # 20 is sha1 hash size
+
         client_key = hmac.HMAC(salted_pass, b"Client Key", hashlib.sha1).digest()
         auth_msg = b"n=%s,r=%s,%s,c=biws,r=%s" % (
             user.encode('utf-8'),
