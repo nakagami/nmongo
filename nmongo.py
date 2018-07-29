@@ -137,6 +137,14 @@ except ImportError:
             return s
 
 
+def _bytes_to_big_uint(b):
+    "Convert from big endian bytes to uint."
+    r = 0
+    for n in b:
+        r = r * 256 + n
+    return r
+
+
 def _uint_to_bytes(val, ln):
     "Convert int value to little endian bytes."
     a = []
@@ -266,6 +274,7 @@ def _md5_hexdigest(message):
 
 
 def hmac_sha1_digest(key, msg):
+    # TODO: micropython
     import hmac
     return hmac.HMAC(key, msg, hashlib.sha1).digest()
 
@@ -1232,17 +1241,15 @@ class MongoDatabase:
             password = _md5_hexdigest((user + ':mongo:' + password).encode('utf-8'))
 
         # calc salted_pass
-        #if sys.implementation.name == 'micropython':
-        # TODO:
-        if True:
+        if sys.implementation.name == 'micropython':
             _u1 = hmac_sha1_digest(
                 password.encode('utf-8'),
                 base64.standard_b64decode(reply_payload['s']) + b'\x00\x00\x00\x01'
             )
-            _ui = int.from_bytes(_u1, 'big')
+            _ui = _bytes_to_big_uint(_u1)
             for _ in range(reply_payload['i'] - 1):
                 _u1 = hmac_sha1_digest(password.encode('utf-8'), _u1)
-                _ui ^= int.from_bytes(_u1, 'big')
+                _ui ^= _bytes_to_big_uint(_u1)
             # 20 is sha1 hash size
             salted_pass = _uint_to_bytes(_ui, 20)
             # reverse (little to big endian)
