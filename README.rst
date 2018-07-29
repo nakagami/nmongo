@@ -15,7 +15,7 @@ Support platform
 Support database
 ------------------
 
-- MongoDB 3.2, 3.4
+- MongoDB 3.2, 3.4, 3.6
 
 Install
 ----------
