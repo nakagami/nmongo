@@ -268,6 +268,10 @@ def _md5_hexdigest(message):
     ).decode('utf-8')
 
 
+def hmac_sha1_digest(key, msg):
+    import hmac
+    return hmac.HMAC(key, msg, hashlib.sha1).digest()
+
 # ------------------------------------------------------------------------------
 # BSON format
 # http://bsonspec.org/spec.html
@@ -1227,16 +1231,16 @@ class MongoDatabase:
             password = _md5_hexdigest((user + ':mongo:' + password).encode('utf-8'))
 
         # calc salted_pass
-        if sys.implementation.name == 'micropython':
-            def _digest(msg):
-                mac = hmac.HMAC(password.encode('utf-8'), None, hashlib.sha1)
-                mac.update(msg)
-                return mac.digest()
-
-            _u1 = _digest(base64.standard_b64decode(reply_payload['s']) + b'\x00\x00\x00\x01')
+        #if sys.implementation.name == 'micropython':
+        # TODO:
+        if True:
+            _u1 = hmac_sha1_digest(
+                password.encode('utf-8'),
+                base64.standard_b64decode(reply_payload['s']) + b'\x00\x00\x00\x01'
+            )
             _ui = int.from_bytes(_u1, 'big')
             for _ in range(reply_payload['i'] - 1):
-                _u1 = _digest(_u1)
+                _u1 = hmac_sha1_digest(password.encode('utf-8'), _u1)
                 _ui ^= int.from_bytes(_u1, 'big')
             # 20 is sha1 hash size
             salted_pass = _uint_to_bytes(_ui, 20)
