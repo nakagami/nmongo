@@ -29,10 +29,8 @@ import time
 import binascii
 import struct
 import random
-try:
-    import hashlib
-except ImportError:
-    import uhashlib as hashlib
+import hashlib
+
 try:
     from decimal import Decimal
 except ImportError:
@@ -1208,10 +1206,8 @@ class MongoDatabase:
         import base64
         import hmac
 
-        if sys.implementation.name == 'micropython':
-            raise NotImplementedError()
         printable = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/'
-        nonce = ''.join(random.choice(printable) for i in range(32))
+        nonce = ''.join(printable[random.randrange(0, len(printable))] for i in range(32))
         r = self.runCommand({
             'saslStart': 1.0,
             'mechanism': 'SCRAM-SHA-1',
@@ -1242,7 +1238,10 @@ class MongoDatabase:
             for _ in range(reply_payload['i'] - 1):
                 _u1 = _digest(_u1)
                 _ui ^= int.from_bytes(_u1, 'big')
-            salted_pass = int.to_bytes(_ui, 20, 'big')  # 20 is sha1 hash size
+            # 20 is sha1 hash size
+            salted_pass = _uint_to_bytes(_ui, 20)
+            # reverse (little to big endian)
+            salted_pass = bytes(reversed(bytearray(salted_pass)))
         else:
             salted_pass = hashlib.pbkdf2_hmac(
                 'sha1',
