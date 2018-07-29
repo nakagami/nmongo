@@ -274,9 +274,29 @@ def _md5_hexdigest(message):
 
 
 def hmac_sha1_digest(key, msg):
-    # TODO: micropython
-    import hmac
-    return hmac.HMAC(key, msg, hashlib.sha1).digest()
+    if sys.implementation.name == 'micropython':
+        def translate(d, t):
+            return bytes(t[x] for x in d)
+        trans_5C = bytes((x ^ 0x5C) for x in range(256))
+        trans_36 = bytes((x ^ 0x36) for x in range(256))
+
+        outer = hashlib.sha1()
+        inner = hashlib.sha1()
+        digest_size = 20
+        blocksize = 64
+
+        if len(key) > blocksize:
+            key = hashlib.sha1(key).digest()
+
+        key = key + bytes(blocksize - len(key))
+        outer.update(translate(key, trans_5C))
+        inner.update(translate(key, trans_36))
+        inner.update(msg)
+        outer.update(inner.digest())
+        return outer.digest()
+    else:
+        import hmac
+        return hmac.HMAC(key, msg, hashlib.sha1).digest()
 
 
 class OperationalError(Exception):
