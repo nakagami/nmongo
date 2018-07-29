@@ -1210,7 +1210,6 @@ class MongoDatabase:
     def auth(self, user, password):
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
         import base64
-        import hmac
 
         printable = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/'
         nonce = ''.join(printable[random.randrange(0, len(printable))] for i in range(32))
