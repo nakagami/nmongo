@@ -31,6 +31,10 @@ import struct
 import random
 import hashlib
 
+
+__version__ = '0.4.0'
+
+
 try:
     from decimal import Decimal
 except ImportError:
@@ -131,13 +135,6 @@ except ImportError:
             elif self.exponent < 0:
                 s = s[:self.exponent] + '.' + s[self.exponent:]
             return s
-
-
-__version__ = '0.4.0'
-
-
-class OperationalError(Exception):
-    pass
 
 
 def _uint_to_bytes(val, ln):
@@ -271,6 +268,11 @@ def _md5_hexdigest(message):
 def hmac_sha1_digest(key, msg):
     import hmac
     return hmac.HMAC(key, msg, hashlib.sha1).digest()
+
+
+class OperationalError(Exception):
+    pass
+
 
 # ------------------------------------------------------------------------------
 # BSON format
