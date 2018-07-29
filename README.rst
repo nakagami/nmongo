@@ -38,7 +38,6 @@ MicroPython
        micropython-random \
        micropython-struct \
        micropython-base64 \
-       micropython-hashlib \
        micropython-unittest
 
    $ micropython -m upip install nmongo
@@ -77,8 +76,6 @@ or
 
 User Authentication
 ~~~~~~~~~~~~~~~~~~~~
-
-Sorry, not suported by micropython.
 
 ::
 
@@ -165,6 +162,5 @@ MicroPython
 ~~~~~~~~~~~~
 
 - ssl
-- authentication
 - datetime.datetime
 - time.struct_time

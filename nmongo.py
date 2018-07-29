@@ -29,7 +29,10 @@ import time
 import binascii
 import struct
 import random
-import hashlib
+try:
+    import hashlib
+except ImportError:
+    import uhashlib as hashlib
 
 
 __version__ = '0.4.0'
