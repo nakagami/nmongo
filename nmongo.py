@@ -302,6 +302,11 @@ def hmac_sha1_digest(key, msg):
         return hmac.HMAC(key, msg, hashlib.sha1).digest()
 
 
+def hmac_sha256_digest(key, msg):
+    import hmac
+    return hmac.HMAC(key, msg, hashlib.sha1).digest()
+
+
 class OperationalError(Exception):
     pass
 
@@ -1239,7 +1244,7 @@ class MongoDatabase:
             raise AttributeError
         return MongoCollection(self, name)
 
-    def auth(self, user, password):
+    def _auth_scram_sha1(self, user, password):
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
         import base64
 
@@ -1252,6 +1257,7 @@ class MongoDatabase:
         }, database='admin')
         if not r['ok']:
             raise OperationalError(r['errmsg'])
+
         reply_payload = {s[0]: s[2:] for s in r['payload'].decode('utf-8').split(',')}
         reply_payload['i'] = int(reply_payload['i'])
         assert reply_payload['r'][:len(nonce)] == nonce
@@ -1319,6 +1325,95 @@ class MongoDatabase:
             }, database='admin')
             if not r['ok']:
                 raise OperationalError(r['errmsg'])
+
+    def _auth_scram_sha256(self, user, password):
+        # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-256
+        import base64
+
+        printable = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/'
+        nonce = ''.join(printable[random.randrange(0, len(printable))] for i in range(32))
+        r = self.runCommand({
+            'saslStart': 1.0,
+            'mechanism': 'SCRAM-SHA-256',
+            'payload': ('n,,n=%s,r=%s' % (user, nonce)).encode('utf-8'),
+        }, database='admin')
+        if not r['ok']:
+            raise OperationalError(r['errmsg'])
+
+        reply_payload = {s[0]: s[2:] for s in r['payload'].decode('utf-8').split(',')}
+        reply_payload['i'] = int(reply_payload['i'])
+        assert reply_payload['r'][:len(nonce)] == nonce
+
+        if hasattr(hashlib, "md5"):
+            m = hashlib.md5()
+            m.update((user + ':mongo:' + password).encode('utf-8'))
+            password = m.hexdigest()
+        else:
+            password = _md5_hexdigest((user + ':mongo:' + password).encode('utf-8'))
+
+        # calc salted_pass
+        if sys.implementation.name == 'micropython':
+            _u1 = hmac_256_digest(
+                password.encode('utf-8'),
+                base64.standard_b64decode(reply_payload['s']) + b'\x00\x00\x00\x01'
+            )
+            _ui = _bytes_to_big_uint(_u1)
+            for _ in range(reply_payload['i'] - 1):
+                _u1 = hmac_256_digest(password.encode('utf-8'), _u1)
+                _ui ^= _bytes_to_big_uint(_u1)
+            # 32 is sha256 hash size
+            salted_pass = _uint_to_bytes(_ui, 32)
+            # reverse (little to big endian)
+            salted_pass = bytes(reversed(bytearray(salted_pass)))
+        else:
+            salted_pass = hashlib.pbkdf2_hmac(
+                'sha256',
+                password.encode('utf-8'),
+                base64.standard_b64decode(reply_payload['s']),
+                reply_payload['i'],
+            )
+
+        client_key = hmac_sha256_digest(salted_pass, b"Client Key")
+        auth_msg = b"n=%s,r=%s,%s,c=biws,r=%s" % (
+            user.encode('utf-8'),
+            nonce.encode('utf-8'),r['payload'],
+            reply_payload['r'].encode('utf-8'),
+        )
+        client_sig = hmac_sha256_digest(hashlib.sha256(client_key).digest(), auth_msg)
+        proof = base64.standard_b64encode(
+            b"".join([bytes([x ^ y]) for x, y in zip(client_key, client_sig)])
+        )
+        payload = ("c=biws,r=%s,p=" % reply_payload['r']).encode('utf-8') + proof
+
+        k = hmac_sha256_digest(salted_pass, b"Server Key")
+        server_sig = base64.standard_b64encode(hmac_sha256_digest(k, auth_msg)).decode('utf-8')
+
+        r = self.runCommand({
+            'saslContinue': 1.0,
+            'conversationId': r['conversationId'],
+            'payload': payload,
+        }, database='admin')
+        if not r['ok']:
+            raise OperationalError(r['errmsg'])
+        reply_payload = {s[0]: s[2:] for s in r['payload'].decode('utf-8').split(',')}
+
+        assert reply_payload['v'] == server_sig
+
+        if not r['done']:
+            r = self.runCommand({
+                'saslContinue': 1.0,
+                'conversationId': r['conversationId'],
+                'payload': b'',
+            }, database='admin')
+            if not r['ok']:
+                raise OperationalError(r['errmsg'])
+
+    def auth(self, user, password, mechanism='SCRAM-SHA-1'):
+        if mechanism == 'SCRAM-SHA-256':
+            return self._auth_scram_sha256(user, password)
+        elif mechanism == 'SCRAM-SHA-1':
+            return self._auth_scram_sha1(user, password)
+        raise ValueError("Unknown auth mechanizm %s" % (mechanism, ))
 
     def genObjectId(self):
         self._object_id_counter = (self._object_id_counter + 1) & 0xffffff
