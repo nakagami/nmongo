@@ -304,7 +304,7 @@ def hmac_sha1_digest(key, msg):
 
 def hmac_sha256_digest(key, msg):
     import hmac
-    return hmac.HMAC(key, msg, hashlib.sha1).digest()
+    return hmac.HMAC(key, msg, hashlib.sha256).digest()
 
 
 class OperationalError(Exception):
