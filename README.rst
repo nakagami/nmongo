@@ -153,8 +153,8 @@ See also mongo Shell Methods (Collection and Database sections).
 Features Not Implemented
 --------------------------
 
-Common
-~~~~~~~~
+All platform
+~~~~~~~~~~~~~~~~~~~~~
 
 - GridFS
 
