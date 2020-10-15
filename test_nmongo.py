@@ -26,7 +26,6 @@
 import sys
 import unittest
 import datetime
-import time
 import nmongo
 try:
     from decimal import Decimal
@@ -34,16 +33,13 @@ except ImportError:
     from nmongo import Decimal
 
 
-class TestMongo(unittest.TestCase):
-    host = 'localhost'
-    database = 'test_nmongo'
-    port = 27017
-    use_ssl = False
-    ssl_ca_certs = '/etc/ssl/mongodb-cert.crt'
+class TestBase:
+    # ssl_ca_certs = '/etc/ssl/mongodb-cert.crt'
+    ssl_ca_certs = None
 
     def assertEqualDict(self, d1, d2):
         self.assertEqual(set(d1.keys()), set(d2.keys()))
-        for k,v in d1.items():
+        for k, v in d1.items():
             self.assertEqual(d2.get(k), v)
 
     def test_nmongo(self):
@@ -241,6 +237,14 @@ class TestMongo(unittest.TestCase):
         for data in datum:
             self.assertEqual(tuple(Decimal(data[0]).as_tuple()), data[1])
             self.assertEqual(str(Decimal(data[0])), data[2])
+
+
+class TestMongo(TestBase, unittest.TestCase):
+    host = 'localhost'
+    database = 'test_nmongo'
+    port = 27017
+    use_ssl = False
+
 
 if __name__ == "__main__":
     unittest.main()
