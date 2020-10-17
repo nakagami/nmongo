@@ -1183,8 +1183,14 @@ class MongoCollection:
 
 class MongoDatabase:
     def _get_machine_id_bytes(self):
+        if sys.implementation.name == 'micropython':
+            name = 'micropython'
+        elif sys.platform == 'win32':
+            name = os.environ['COMPUTERNAME']
+        else:
+            name = socket.gethostname()
         sha1 = hashlib.sha1()
-        sha1.update(self.runCommand({'whatsmyuri': 1})['you'].encode('utf-8'))
+        sha1.update(name.encode('utf-8'))
         return sha1.digest()[:3]
 
     def _get_time_bytes(self):

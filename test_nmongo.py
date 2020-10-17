@@ -24,6 +24,7 @@
 # SOFTWARE.
 ###############################################################################
 import sys
+import os
 import unittest
 import datetime
 import nmongo
@@ -36,152 +37,113 @@ except ImportError:
 class TestBase:
     # ssl_ca_certs = '/etc/ssl/mongodb-cert.crt'
     ssl_ca_certs = None
+    user = None
+    password = ''
 
     def assertEqualDict(self, d1, d2):
         self.assertEqual(set(d1.keys()), set(d2.keys()))
         for k, v in d1.items():
             self.assertEqual(d2.get(k), v)
 
-    def test_nmongo(self):
-        db = nmongo.connect(
+    def setUp(self):
+        self.db = nmongo.connect(
             self.host,
             self.database,
             port=self.port,
+            user=self.user,
+            password=self.password,
             use_ssl=self.use_ssl,
             ssl_ca_certs=self.ssl_ca_certs
         )
-        r = db.pets.drop()
-        mongo_version = [int(n) for n in db.version().split('.')][:2]
+        r = self.db.pets.drop()
+        self.mongo_version = [int(n) for n in self.db.version().split('.')][:2]
 
-        data1 = {
+        self.data1 = {
             'name': 'Kitty',
             'gender': 'f',
             'age': 0,
             'species': 'cat',
         }
-        if mongo_version > [3, 2]:
-            data1['weight'] = Decimal("123.4")
+        if self.mongo_version > [3, 2]:
+            self.data1['weight'] = Decimal("123.4")
 
         if sys.implementation.name != 'micropython':
-            data1['birth'] = datetime.datetime(1974, 11, 1, 1, 1)
-        data2 = {
+            self.data1['birth'] = datetime.datetime(1974, 11, 1, 1, 1)
+        self.data2 = {
             'name': 'Snoopy',
             'gender': 'm',
             'age': 0,
             'species': 'cat',
         }
-        if mongo_version > [3, 2]:
-            data2['weight'] = Decimal("1234.0")
-        data3 = {
+        if self.mongo_version > [3, 2]:
+            self.data2['weight'] = Decimal("1234.0")
+        self.data3 = {
             'name': 'Kuri',
             'gender': 'm',
             'age': 0,
             'species': 'ferret',
         }
-        if mongo_version > [3, 2]:
-            data3['weight'] = Decimal("NaN")
+        if self.mongo_version > [3, 2]:
+            self.data3['weight'] = Decimal("NaN")
 
         # Create
-        db.pets.insert(data1)
-        db.pets.insert([data2, data3])
-        self.assertIn('pets', db.getCollectionNames())
+        self.db.pets.insert(self.data1)
+        self.db.pets.insert([self.data2, self.data3])
+        self.assertIn('pets', self.db.getCollectionNames())
 
-        # index
-        db.pets.createIndex(
-            {'name': 1, 'gender': -1},
-            options={'name': 'named_pets_index'}
-        )
-        db.pets.createIndex(
-            {'name': -1},
-            options={'name': 'desc_name_pets_index'}
-        )
-        self.assertIn(
-            'named_pets_index',
-            [idx['name'] for idx in db.pets.getIndexes()]
-        )
-        db.pets.dropIndex('named_pets_index')
-        self.assertTrue('named_pets_index' not in [idx['name'] for idx in db.pets.getIndexes()])
-        self.assertEqual(len(db.pets.getIndexes()), 2)
+    def tearDown(self):
+        self.db.close()
 
-        db.pets.dropIndexes()
-        self.assertEqual(len(db.pets.getIndexes()), 1)
-
-        # collection methods
-        self.assertTrue(db.pets.stats()['ok'])
-        db.createCollection('testcapped', {'capped': True, 'size': 1024})
-        self.assertTrue(db.testcapped.isCapped())
-
-        # database methods
-        self.assertTrue(db.serverStatus()['ok'])
-        self.assertEqual(db.stats()['db'], self.database)
-
-        # mapReduce
-        self.assertTrue(
-            db.pets.mapReduce(
-                "function(){}",             # map
-                "function(key, values){}",  # reduce
-                {'out': {'inline': 1}}
-            )['ok']
-        )
-
-        # group
-        self.assertTrue(
-            db.pets.group(
-                {'name': 1, 'gender': 1},     # key
-                "function (c, r) {}",       # reduce
-                {},                         # initial
-                cond={'gender': 'm'},
-            )['ok']
-        )
+    def test_base(self):
 
         # Read
-        cur = db.pets.find(projection={'_id': 0})
-        self.assertEqualDict(cur.fetchone(), data1)
+        cur = self.db.pets.find(projection={'_id': 0})
+        self.assertEqualDict(cur.fetchone(), self.data1)
 
-        self.assertEqual(db.pets.count(), 3)
+        self.assertEqual(self.db.pets.count(), 3)
 
-        self.assertEqual(set(db.pets.distinct('gender')), set(['m', 'f']))
+        self.assertEqual(set(self.db.pets.distinct('gender')), set(['m', 'f']))
 
         # findAndModify
-        prev_data1 = db.pets.findAndModify(
+        prev_data1 = self.db.pets.findAndModify(
             query={'name': 'Kitty'},
             update={'$inc': {'age': 1}},
         )
-        next_data1 = db.pets.findOne({'name': 'Kitty'})
+        next_data1 = self.db.pets.findOne({'name': 'Kitty'})
         self.assertEqual(prev_data1['age'] + 1, next_data1['age'])
 
         # Update
-        r = db.pets.update(
+        r = self.db.pets.update(
             {'name': 'Snoopy'},
             {'name': 'Snoopy', 'gender': 'f', 'age': 10, 'species': 'wolf'}
         )
         self.assertTrue(r['ok'])
         self.assertEqual(r['nModified'], 1)
         self.assertEqualDict(
-            db.pets.findOne({'name': 'Snoopy'}, projection={'_id': 0}),
+            self.db.pets.findOne({'name': 'Snoopy'}, projection={'_id': 0}),
             {'name': 'Snoopy', 'gender': 'f', 'age': 10, 'species': 'wolf'},
         )
 
-        r = db.pets.updateOne(
+        r = self.db.pets.updateOne(
             {'name': 'Snoopy'},          # query
             {'$set': {'gender': 'm'}, '$inc': {'age': 1}},  # update
         )
         self.assertTrue(r['ok'])
         self.assertEqual(r['nModified'], 1)
         self.assertEqual(
-            db.pets.findOne({'name': 'Snoopy'}, projection={'_id': 0}),
+            self.db.pets.findOne({'name': 'Snoopy'}, projection={'_id': 0}),
             {'name': 'Snoopy', 'gender': 'm', 'age': 11, 'species': 'wolf'},
         )
 
-        self.assertEqual(db.pets.count(), 3)
-        r = db.pets.updateMany(
+        self.assertEqual(self.db.pets.count(), 3)
+        r = self.db.pets.updateMany(
             {},                     # query
             {'$inc': {'age': 1}},   # update
         )
         self.assertTrue(r['ok'])
         self.assertEqual(r['n'], 3)
         self.assertEqual(r['nModified'], 3)
-        r = db.pets.updateMany(
+        r = self.db.pets.updateMany(
             {'name': {'$eq': 'Kitty'}},     # query
             {'$set': {'gender': 'f'}},      # update
         )
@@ -190,28 +152,30 @@ class TestBase:
         self.assertEqual(r['nModified'], 0)
 
         # Delete
-        self.assertEqual(db.pets.count(), 3)
-        db.pets.insert(data1)
-        self.assertEqual(db.pets.count(), 4)
-        self.assertEqual(db.pets.remove({'name': 'Kitty', 'age': 0}), 1)
-        self.assertEqual(db.pets.count(), 3)
-        self.assertEqual(db.pets.findOneAndDelete({'name': 'Kitty'})['age'], 2)
-        self.assertEqual(db.pets.count(), 2)
+        self.assertEqual(self.db.pets.count(), 3)
+        self.db.pets.insert(self.data1)
+        self.assertEqual(self.db.pets.count(), 4)
+        self.assertEqual(self.db.pets.remove({'name': 'Kitty', 'age': 0}), 1)
+        self.assertEqual(self.db.pets.count(), 3)
+        self.assertEqual(self.db.pets.findOneAndDelete({'name': 'Kitty'})['age'], 2)
+        self.assertEqual(self.db.pets.count(), 2)
 
         # insertOne, insertMany
-        db.pets.drop()
-        oid = db.pets.insertOne(data1)
+        self.db.pets.drop()
+        oid = self.db.pets.insertOne(self.data1)
         self.assertEqual(
-            db.pets.find({'_id': oid}).fetchone()['name'],
-            data1['name']
+            self.db.pets.find({'_id': oid}).fetchone()['name'],
+            self.data1['name']
         )
-        oids = db.pets.insertMany([data2, data3])
+        oids = self.db.pets.insertMany([self.data2, self.data3])
         self.assertEqual(
-            db.pets.find({'_id': oids[0]}).fetchone()['name'],
-            data2['name']
+            self.db.pets.find({'_id': oids[0]}).fetchone()['name'],
+            self.data2['name']
         )
 
-        db.close()
+
+
+
 
     def test_decimal(self):
         datum = [
@@ -244,6 +208,64 @@ class TestMongo(TestBase, unittest.TestCase):
     database = 'test_nmongo'
     port = 27017
     use_ssl = False
+
+    def test_index(self):
+        self.db.pets.createIndex(
+            {'name': 1, 'gender': -1},
+            options={'name': 'named_pets_index'}
+        )
+        self.db.pets.createIndex(
+            {'name': -1},
+            options={'name': 'desc_name_pets_index'}
+        )
+        self.assertIn(
+            'named_pets_index',
+            [idx['name'] for idx in self.db.pets.getIndexes()]
+        )
+        self.db.pets.dropIndex('named_pets_index')
+        self.assertTrue('named_pets_index' not in [idx['name'] for idx in self.db.pets.getIndexes()])
+        self.assertEqual(len(self.db.pets.getIndexes()), 2)
+
+        self.db.pets.dropIndexes()
+        self.assertEqual(len(self.db.pets.getIndexes()), 1)
+
+    def test_is_clapped(self):
+        self.assertTrue(self.db.pets.stats()['ok'])
+        self.db.createCollection('testcapped', {'capped': True, 'size': 1024})
+        self.assertTrue(self.db.testcapped.isCapped())
+
+    def test_servr_status(self):
+        self.assertTrue(self.db.serverStatus()['ok'])
+        self.assertEqual(self.db.stats()['db'], self.database)
+
+    def test_map_reduce(self):
+        self.assertTrue(
+            self.db.pets.mapReduce(
+                "function(){}",             # map
+                "function(key, values){}",  # reduce
+                {'out': {'inline': 1}}
+            )['ok']
+        )
+
+    def test_group(self):
+        self.assertTrue(
+            self.db.pets.group(
+                {'name': 1, 'gender': 1},     # key
+                "function (c, r) {}",       # reduce
+                {},                         # initial
+                cond={'gender': 'm'},
+            )['ok']
+        )
+
+
+if sys.implementation.name != 'micropython' and 'COSMOSDB_USER' in os.environ:
+    class TestAzureCosmosDB(TestBase, unittest.TestCase):
+        host = ".".join([os.environ['COSMOSDB_USER'], "mongo.cosmos.azure.com"])
+        database = 'test_nmongo'
+        port = 10255
+        user = os.environ['COSMOSDB_USER']
+        password = os.environ['COSMOSDB_PASSWORD']
+        use_ssl = True
 
 
 if __name__ == "__main__":
