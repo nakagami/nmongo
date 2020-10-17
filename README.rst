@@ -16,6 +16,7 @@ Support database
 ------------------
 
 - MongoDB 3.2, 3.4, 3.6
+- Azure CosmosDB (MongoDB API)
 
 Install
 ----------
@@ -82,6 +83,18 @@ User Authentication
    >>> import nmongo
    >>> db = nmongo.connect('servername', 'somewhatdatabase', user='user', password='password')
    >>>
+
+
+Connect to Azure CosmosDB (MongoDB API)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+::
+
+   >>> import nmongo
+   >>> db = nmongo.connect('xxx.mongo.cosmos.azure.com', 'somewhatdatabase', user='xxx', password='password', port = 10255, use_ssl=True)
+   >>>
+
 
 Create
 ~~~~~~~
@@ -161,6 +174,6 @@ All platform
 MicroPython
 ~~~~~~~~~~~~
 
-- ssl
+- ssl (so that can't connect to Azure CosmosDB)
 - datetime.datetime
 - time.struct_time
