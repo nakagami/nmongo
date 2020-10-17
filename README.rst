@@ -92,7 +92,7 @@ Connect to Azure CosmosDB (MongoDB API)
 ::
 
    >>> import nmongo
-   >>> db = nmongo.connect('xxx.mongo.cosmos.azure.com', 'somewhatdatabase', user='xxx', password='password', port = 10255, use_ssl=True)
+   >>> db = nmongo.connect('xxx.mongo.cosmos.azure.com', 'somewhatdatabase', user='xxx', password='password', port=10255, use_ssl=True)
    >>>
 
 
