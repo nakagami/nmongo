@@ -55,7 +55,7 @@ class TestBase:
             use_ssl=self.use_ssl,
             ssl_ca_certs=self.ssl_ca_certs
         )
-        r = self.db.pets.drop()
+        self.db.pets.drop()
         self.mongo_version = [int(n) for n in self.db.version().split('.')][:2]
 
         self.data1 = {
@@ -173,10 +173,6 @@ class TestBase:
             self.data2['name']
         )
 
-
-
-
-
     def test_decimal(self):
         datum = [
             [100, (0, (1, 0, 0), 0), '100'],
@@ -212,18 +208,18 @@ class TestMongo(TestBase, unittest.TestCase):
     def test_index(self):
         self.db.pets.createIndex(
             {'name': 1, 'gender': -1},
-            options={'name': 'named_pets_index'}
+            options={'name': 'name1'}
         )
         self.db.pets.createIndex(
             {'name': -1},
-            options={'name': 'desc_name_pets_index'}
+            options={'name': 'name2'}
         )
         self.assertIn(
-            'named_pets_index',
+            'name1',
             [idx['name'] for idx in self.db.pets.getIndexes()]
         )
-        self.db.pets.dropIndex('named_pets_index')
-        self.assertTrue('named_pets_index' not in [idx['name'] for idx in self.db.pets.getIndexes()])
+        self.db.pets.dropIndex('name1')
+        self.assertTrue('name1' not in [idx['name'] for idx in self.db.pets.getIndexes()])
         self.assertEqual(len(self.db.pets.getIndexes()), 2)
 
         self.db.pets.dropIndexes()
@@ -267,6 +263,25 @@ if sys.implementation.name != 'micropython' and 'COSMOSDB_USER' in os.environ:
         password = os.environ['COSMOSDB_PASSWORD']
         use_ssl = True
 
+        def test_index(self):
+            # Azure CosmosDB ignore option's name parameter
+            self.db.pets.createIndex(
+                {'name': 1, 'gender': -1},
+                options={'name': 'name1'}
+            )
+            self.db.pets.createIndex(
+                {'name': -1},
+                options={'name': 'name2'}
+            )
+
+            indexes = self.db.pets.getIndexes()
+            self.assertEqual(3, len(indexes))
+
+            self.db.pets.dropIndex('name_1_gender_-1')  # drop name1
+            self.assertEqual(len(self.db.pets.getIndexes()), 2)
+
+            self.db.pets.dropIndexes()
+            self.assertEqual(len(self.db.pets.getIndexes()), 1)
 
 if __name__ == "__main__":
     unittest.main()
