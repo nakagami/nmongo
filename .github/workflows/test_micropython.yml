@@ -21,7 +21,7 @@ jobs:
         mongodb-version: 3.6
     - name: Install MicroPython
       run: |
-        sudo apt install micropython
+        snap install micropython
         micropython -m upip install micropython-errno
         micropython -m upip install micropython-os
         micropython -m upip install micropython-socket
