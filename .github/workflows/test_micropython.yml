@@ -32,6 +32,7 @@ jobs:
         micropython -m upip install micropython-struct
         micropython -m upip install micropython-base64
         micropython -m upip install micropython-unittest
+        patch --directory=$HOME/.micropython/lib < tzinfo.patch
     - name: Test
       run: |
         micropython test_nmongo.py
