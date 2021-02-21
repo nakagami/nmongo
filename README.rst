@@ -45,8 +45,10 @@ MicroPython
 
    $ micropython -m upip install nmongo
 
-if you use MicroPython
-patch file https://github.com/micropython/micropython-lib/pull/338
+if you use MicroPython patch datetime.py
+
+- https://github.com/nakagami/nmongo/blob/master/tzinfo.patch
+- https://github.com/micropython/micropython-lib/pull/338
 
 
 Example
