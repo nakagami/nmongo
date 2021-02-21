@@ -22,12 +22,16 @@ Install
 ----------
 
 CPython
+++++++++++++++
+
 ::
 
    $ python3 -m pip install nmongo
 
 
 MicroPython
+++++++++++++++
+
 ::
 
    $ micropython -m upip install micropython-errno \
@@ -43,6 +47,9 @@ MicroPython
 
    $ micropython -m upip install nmongo
 
+Next patch file
+
+see https://github.com/micropython/micropython-lib/pull/338
 
 
 Example
