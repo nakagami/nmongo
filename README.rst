@@ -22,7 +22,6 @@ Install
 ----------
 
 CPython
-++++++++++++++
 
 ::
 
@@ -30,7 +29,6 @@ CPython
 
 
 MicroPython
-++++++++++++++
 
 ::
 
@@ -47,9 +45,7 @@ MicroPython
 
    $ micropython -m upip install nmongo
 
-Next patch file
-
-see https://github.com/micropython/micropython-lib/pull/338
+And patch file https://github.com/micropython/micropython-lib/pull/338
 
 
 Example
