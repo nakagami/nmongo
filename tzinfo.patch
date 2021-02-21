@@ -5,7 +5,7 @@
      """
      __slots__ = ()
 +    def __new__(cls):
-+        return object.__new(cls)
++        return object.__new__(cls)
 +
      def tzname(self, dt):
          "datetime -> string name of time zone."
