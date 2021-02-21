@@ -45,7 +45,7 @@ MicroPython
 
    $ micropython -m upip install nmongo
 
-if you use Micropython
+if you use MicroPython
 patch file https://github.com/micropython/micropython-lib/pull/338
 
 
