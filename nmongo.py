@@ -33,6 +33,10 @@ try:
     import hashlib
 except ImportError:
     import uhashlib as hashlib
+try:
+    import ssl
+except ImportError:
+    import ussl as ssl
 
 
 __version__ = '0.4.3'
@@ -1205,7 +1209,6 @@ class MongoDatabase:
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self.host, self.port))
         if use_ssl:
-            import ssl
             if ssl_ca_certs:
                 self._sock = ssl.wrap_socket(self._sock, ca_certs=ssl_ca_certs)
             else:
