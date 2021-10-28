@@ -10,7 +10,7 @@ Support platform
 ------------------
 
 - CPython 3.5+ https://www.python.org
-- MicroPython (unix) http://docs.micropython.org/en/latest/unix/
+- MicroPython (unix) http://docs.micropython.org/en/latest/unix/　(I haven't tried any other platforms.)
 
 Support database
 ------------------
