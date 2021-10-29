@@ -2,7 +2,7 @@
 nmongo
 ==========
 
-MongoDB client for CPython and MicroPython.
+MongoDB 3.x client for CPython and MicroPython.
 
 It has mongo shell like APIs.
 
