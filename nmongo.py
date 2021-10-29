@@ -29,14 +29,11 @@ import time
 import binascii
 import struct
 import random
+import ssl
 try:
     import hashlib
 except ImportError:
     import uhashlib as hashlib
-try:
-    import ssl
-except ImportError:
-    import ussl as ssl
 
 
 __version__ = '0.4.3'
