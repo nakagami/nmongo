@@ -254,34 +254,5 @@ class TestMongo(TestBase, unittest.TestCase):
         )
 
 
-if sys.implementation.name != 'micropython' and 'COSMOSDB_USER' in os.environ:
-    class TestAzureCosmosDB(TestBase, unittest.TestCase):
-        host = ".".join([os.environ['COSMOSDB_USER'], "mongo.cosmos.azure.com"])
-        database = 'test_nmongo'
-        port = 10255
-        user = os.environ['COSMOSDB_USER']
-        password = os.environ['COSMOSDB_PASSWORD']
-        use_ssl = True
-
-        def test_index(self):
-            # Azure CosmosDB ignore option's name parameter
-            self.db.pets.createIndex(
-                {'name': 1, 'gender': -1},
-                options={'name': 'name1'}
-            )
-            self.db.pets.createIndex(
-                {'name': -1},
-                options={'name': 'name2'}
-            )
-
-            indexes = self.db.pets.getIndexes()
-            self.assertEqual(3, len(indexes))
-
-            self.db.pets.dropIndex('name_1_gender_-1')  # drop name1
-            self.assertEqual(len(self.db.pets.getIndexes()), 2)
-
-            self.db.pets.dropIndexes()
-            self.assertEqual(len(self.db.pets.getIndexes()), 1)
-
 if __name__ == "__main__":
     unittest.main()
