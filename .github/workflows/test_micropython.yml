@@ -5,9 +5,7 @@ name: MicroPython package
 
 on:
   push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
 
 jobs:
   build:
@@ -27,7 +25,6 @@ jobs:
         micropython -m upip install micropython-socket
         micropython -m upip install micropython-time
         micropython -m upip install micropython-datetime
-        micropython -m upip install micropython-binascii
         micropython -m upip install micropython-random
         micropython -m upip install micropython-struct
         micropython -m upip install micropython-base64

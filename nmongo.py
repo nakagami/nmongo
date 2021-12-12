@@ -191,7 +191,7 @@ class OperationalError(Exception):
 class ObjectId:
     def __init__(self, oid):
         if isinstance(oid, str):
-            oid = binascii.a2b_hex(oid)
+            oid = binascii.unhexlify(oid)
         assert isinstance(oid, bytes) and len(oid) == 12
         self.oid = oid
 
