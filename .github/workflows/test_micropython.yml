@@ -22,7 +22,6 @@ jobs:
         sudo apt install micropython
         micropython -m upip install micropython-time
         micropython -m upip install micropython-datetime
-        micropython -m upip install micropython-base64
         micropython -m upip install micropython-unittest
         patch --directory=$HOME/.micropython/lib < tzinfo.patch
     - name: Test

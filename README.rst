@@ -30,19 +30,16 @@ CPython
 
 MicroPython
 
-::
-
-   $ micropython -m upip install micropython-time \
-       micropython-datetime \
-       micropython-base64
-
-   $ micropython -m upip install nmongo
-
 if you use MicroPython patch datetime.py
 
 - https://github.com/nakagami/nmongo/blob/master/tzinfo.patch
 - https://github.com/micropython/micropython-lib/pull/338
 
+::
+
+   $ micropython -m upip install micropython-time micropython-datetime
+   $ patch --directory=$HOME/.micropython/lib < tzinfo.patch
+   $ micropython -m upip install nmongo
 
 Example
 -----------

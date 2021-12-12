@@ -155,6 +155,14 @@ def _uint_to_bytes(val, ln):
     return bytes(a)
 
 
+def base64_encode(s):
+    return binascii.b2a_base64(s)[:-1]
+
+
+def base64_decode(s):
+    return binascii.a2b_base64(s)
+
+
 def hmac_sha1_digest(key, msg):
     if sys.implementation.name == 'micropython':
         def translate(d, t):
@@ -1132,8 +1140,6 @@ class MongoDatabase:
 
     def auth(self, user, password):
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
-        import base64
-
         printable = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/'
         nonce = ''.join(printable[random.randrange(0, len(printable))] for i in range(32))
         r = self.runCommand({
@@ -1153,7 +1159,7 @@ class MongoDatabase:
         if sys.implementation.name == 'micropython':
             _u1 = hmac_sha1_digest(
                 password,
-                base64.standard_b64decode(reply_payload['s']) + b'\x00\x00\x00\x01'
+                base64_decode(reply_payload['s']) + b'\x00\x00\x00\x01'
             )
             _ui = _bytes_to_big_uint(_u1)
             for _ in range(reply_payload['i'] - 1):
@@ -1167,7 +1173,7 @@ class MongoDatabase:
             salted_pass = hashlib.pbkdf2_hmac(
                 'sha1',
                 password,
-                base64.standard_b64decode(reply_payload['s']),
+                base64_decode(reply_payload['s']),
                 reply_payload['i'],
             )
 
@@ -1178,13 +1184,13 @@ class MongoDatabase:
             reply_payload['r'].encode('utf-8'),
         )
         client_sig = hmac_sha1_digest(hashlib.sha1(client_key).digest(), auth_msg)
-        proof = base64.standard_b64encode(
+        proof = base64_encode(
             b"".join([bytes([x ^ y]) for x, y in zip(client_key, client_sig)])
         )
         payload = ("c=biws,r=%s,p=" % reply_payload['r']).encode('utf-8') + proof
 
         k = hmac_sha1_digest(salted_pass, b"Server Key")
-        server_sig = base64.standard_b64encode(hmac_sha1_digest(k, auth_msg)).decode('utf-8')
+        server_sig = base64_encode(hmac_sha1_digest(k, auth_msg)).decode('utf-8')
 
         r = self.runCommand({
             'saslContinue': 1.0,
