@@ -1098,7 +1098,7 @@ class MongoDatabase:
             sha1 = hashlib.sha1()
             sha1.update(self._get_time_bytes())
             self._object_id_counter = to_uint(sha1.digest()[:3])
-            self._process_id_bytes = b''
+            self._process_id_bytes = b'\x00\x00'
 
         if self.user:
             self.auth(self.user, self.password)
