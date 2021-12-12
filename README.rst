@@ -167,14 +167,4 @@ See also mongo Shell Methods (Collection and Database sections).
 Features Not Implemented
 --------------------------
 
-All platform
-~~~~~~~~~~~~~~~~~~~~~
-
 - GridFS
-
-MicroPython
-~~~~~~~~~~~~
-
-- ssl (so that can't connect to Azure CosmosDB)
-- datetime.datetime
-- time.struct_time
