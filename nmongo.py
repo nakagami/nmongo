@@ -1093,11 +1093,12 @@ class MongoDatabase:
 
         if sys.implementation.name != 'micropython':
             self._object_id_counter = random.randrange(0, 0xffffff)
+            self._process_id_bytes = bytes(reversed(from_int32(os.getpid())[:2]))
         else:
             sha1 = hashlib.sha1()
             sha1.update(self._get_time_bytes())
             self._object_id_counter = to_uint(sha1.digest()[:3])
-        self._process_id_bytes = bytes(reversed(from_int32(os.getpid())[:2]))
+            self._process_id_bytes = b''
 
         if self.user:
             self.auth(self.user, self.password)
