@@ -202,7 +202,7 @@ class ObjectId:
         return self.to_bytes() == o.to_bytes()
 
     def __repr__(self):
-        return 'ObjectId("%s")' % (binascii.b2a_hex(self.oid).decode('utf-8'), )
+        return 'ObjectId("%s")' % (binascii.hexlify(self.oid).decode('utf-8'), )
 
 
 class Code:
