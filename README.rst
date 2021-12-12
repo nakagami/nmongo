@@ -35,7 +35,6 @@ MicroPython
    $ micropython -m upip install micropython-time \
        micropython-datetime \
        micropython-random \
-       micropython-struct \
        micropython-base64
 
    $ micropython -m upip install nmongo
