@@ -1108,7 +1108,7 @@ class MongoDatabase:
     def _send(self, b):
         n = 0
         while (n < len(b)):
-            self.use_ssl and sys.implementation.name == 'micropython':
+            if self.use_ssl and sys.implementation.name == 'micropython':
                 n += self._sock.write(b[n:])
             else:
                 n += self._sock.send(b[n:])
@@ -1116,7 +1116,7 @@ class MongoDatabase:
     def _recv(self, ln):
         r = b''
         while len(r) < ln:
-            self.use_ssl and sys.implementation.name == 'micropython':
+            if self.use_ssl and sys.implementation.name == 'micropython':
                 b = self._sock.read(ln-len(r))
             else:
                 b = self._sock.recv(ln-len(r))
