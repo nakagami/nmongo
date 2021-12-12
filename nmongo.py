@@ -1081,8 +1081,8 @@ class MongoDatabase:
         self.user = user
         self.password = password
         self.port = port
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.connect((self.host, self.port))
+        self._sock = socket.socket()
+        self.sock.connect(socket.getaddrinfo(self.host, self.port, socket.AF_INET)[0][-1])
         if use_ssl:
             if ssl_ca_certs:
                 self._sock = ssl.wrap_socket(self._sock, ca_certs=ssl_ca_certs)
