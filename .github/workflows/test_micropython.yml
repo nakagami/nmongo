@@ -20,6 +20,7 @@ jobs:
     - name: Install MicroPython
       run: |
         sudo apt install micropython
+        micropython -m upip install micropython-errno
         micropython -m upip install micropython-socket
         micropython -m upip install micropython-time
         micropython -m upip install micropython-datetime
