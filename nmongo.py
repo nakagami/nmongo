@@ -1152,12 +1152,12 @@ class MongoDatabase:
         # calc salted_pass
         if sys.implementation.name == 'micropython':
             _u1 = hmac_sha1_digest(
-                password.encode('utf-8'),
+                password,
                 base64.standard_b64decode(reply_payload['s']) + b'\x00\x00\x00\x01'
             )
             _ui = _bytes_to_big_uint(_u1)
             for _ in range(reply_payload['i'] - 1):
-                _u1 = hmac_sha1_digest(password.encode('utf-8'), _u1)
+                _u1 = hmac_sha1_digest(password, _u1)
                 _ui ^= _bytes_to_big_uint(_u1)
             # 20 is sha1 hash size
             salted_pass = _uint_to_bytes(_ui, 20)
