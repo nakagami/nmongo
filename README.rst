@@ -32,8 +32,7 @@ MicroPython
 
 ::
 
-   $ micropython -m upip install micropython-socket \
-       micropython-time \
+   $ micropython -m upip install micropython-time \
        micropython-datetime \
        micropython-random \
        micropython-struct \
