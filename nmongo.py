@@ -1108,12 +1108,12 @@ class MongoDatabase:
     def _send(self, b):
         n = 0
         while (n < len(b)):
-            n += self._sock.send(b[n:])
+            n += self._sock.write(b[n:]) if self.use_ssl else self._sock.send(b[n:])
 
     def _recv(self, ln):
         r = b''
         while len(r) < ln:
-            b = self._sock.recv(ln-len(r))
+            b = self._sock.read(ln-len(r)) if self.use_ssl else self._sock.recv(ln-len(r))
             if not b:
                 raise socket.error("Can't recv packets")
             r += b
