@@ -1108,12 +1108,18 @@ class MongoDatabase:
     def _send(self, b):
         n = 0
         while (n < len(b)):
-            n += self._sock.write(b[n:]) if self.use_ssl else self._sock.send(b[n:])
+            self.use_ssl and sys.implementation.name == 'micropython':
+                n += self._sock.write(b[n:])
+            else:
+                n += self._sock.send(b[n:])
 
     def _recv(self, ln):
         r = b''
         while len(r) < ln:
-            b = self._sock.read(ln-len(r)) if self.use_ssl else self._sock.recv(ln-len(r))
+            self.use_ssl and sys.implementation.name == 'micropython':
+                b = self._sock.read(ln-len(r))
+            else:
+                b = self._sock.recv(ln-len(r))
             if not b:
                 raise socket.error("Can't recv packets")
             r += b
