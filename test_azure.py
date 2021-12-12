@@ -40,7 +40,6 @@ class TestAzureCosmosDB(TestBase, unittest.TestCase):
     use_ssl = True
 
     def test_azure(self):
-        # Azure CosmosDB ignore option's name parameter
         self.db.pets.createIndex(
             {'name': 1, 'gender': -1},
             options={'name': 'name1'}
@@ -52,8 +51,7 @@ class TestAzureCosmosDB(TestBase, unittest.TestCase):
 
         indexes = self.db.pets.getIndexes()
         self.assertEqual(3, len(indexes))
-
-        self.db.pets.dropIndex('name_1_gender_-1')  # drop name1
+        self.db.pets.dropIndex('name1')  # drop name1
         self.assertEqual(len(self.db.pets.getIndexes()), 2)
 
         self.db.pets.dropIndexes()

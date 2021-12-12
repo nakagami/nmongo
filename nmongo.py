@@ -1159,7 +1159,7 @@ class MongoDatabase:
         else:
             salted_pass = hashlib.pbkdf2_hmac(
                 'sha1',
-                password.encode('utf-8'),
+                password,
                 base64.standard_b64decode(reply_payload['s']),
                 reply_payload['i'],
             )
