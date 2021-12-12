@@ -32,11 +32,11 @@ from test_nmongo import TestBase
 
 
 class TestAzureCosmosDB(TestBase, unittest.TestCase):
-    host = ".".join([os.environ['COSMOSDB_USER'], "mongo.cosmos.azure.com"])
-    database = 'test_nmongo'
-    port = 10255
     user = os.environ['COSMOSDB_USER']
     password = os.environ['COSMOSDB_PASSWORD']
+    host = ".".join([user, "mongo.cosmos.azure.com"])
+    database = 'test_nmongo'
+    port = 10255
     use_ssl = True
 
     def test_azure(self):
