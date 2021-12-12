@@ -32,16 +32,12 @@ MicroPython
 
 ::
 
-   $ micropython -m upip install micropython-errno \
-       micropython-os \
-       micropython-socket \
+   $ micropython -m upip install micropython-socket \
        micropython-time \
        micropython-datetime \
-       micropython-binascii \
        micropython-random \
        micropython-struct \
-       micropython-base64 \
-       micropython-unittest
+       micropython-base64
 
    $ micropython -m upip install nmongo
 
