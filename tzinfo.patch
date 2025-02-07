@@ -1,0 +1,12 @@
+--- datetime.py.orig	2021-02-21 00:38:40.475092139 +0000
++++ datetime.py	2021-02-21 00:45:47.628574046 +0000
+@@ -914,6 +914,9 @@
+     Subclasses must override the name(), utcoffset() and dst() methods.
+     """
+     __slots__ = ()
++    def __new__(cls):
++        return object.__new__(cls)
++
+     def tzname(self, dt):
+         "datetime -> string name of time zone."
+         raise NotImplementedError("tzinfo subclass must override tzname()")
