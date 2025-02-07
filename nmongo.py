@@ -340,9 +340,6 @@ def _bson_encode_item(ename, v):
     elif t == bool:
         v = b'\x01' if v else b'\x00'
         b = b'\x08' + to_cstring(ename) + v
-    elif t == time.struct_time:
-        v = from_int64(int(time.mktime(v) * 1000.0))
-        b = b'\x09' + to_cstring(ename) + v
     elif t == datetime.datetime:
         v = from_int64(int(time.mktime(v.timetuple()) * 1000.0))
         b = b'\x09' + to_cstring(ename) + v
