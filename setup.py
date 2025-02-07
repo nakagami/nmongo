@@ -17,7 +17,7 @@ setup(
     keywords=['MongoDB'],
     author='Hajime Nakagami',
     author_email='nakagami@gmail.com',
-    description='Yet another MongoDB driver',
+    description='Azure Cosmos DB for MongoDB client',
     long_description=open('README.rst').read(),
     license="MIT",
     py_modules=['nmongo'],
