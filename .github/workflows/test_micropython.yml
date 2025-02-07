@@ -23,7 +23,6 @@ jobs:
         micropython -m upip install micropython-time
         micropython -m upip install micropython-datetime
         micropython -m upip install micropython-unittest
-        patch --directory=$HOME/.micropython/lib < tzinfo.patch
     - name: Test
       run: |
         micropython test_nmongo.py
