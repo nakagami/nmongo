@@ -2,7 +2,7 @@
 nmongo
 ==========
 
-MongoDB 3.x client for CPython and MicroPython.
+Azure CosmosDB (MongoDB API) client for CPython and MicroPython.
 
 It has mongo shell like APIs.
 
@@ -10,7 +10,7 @@ Support platform
 ------------------
 
 - CPython 3.11+ https://www.python.org
-- MicroPython (unix) http://docs.micropython.org/en/latest/unix/　(I haven't tried any other platforms.)
+- MicroPython
 
 Support database
 ------------------
@@ -30,59 +30,20 @@ CPython
 
 MicroPython
 
-if you use MicroPython patch datetime.py
-
-- https://github.com/nakagami/nmongo/blob/master/tzinfo.patch
-- https://github.com/micropython/micropython-lib/pull/338
+Go interactive shell and install with mip as follow.
 
 ::
 
-   $ micropython -m upip install micropython-time micropython-datetime
-   $ patch --directory=$HOME/.micropython/lib < tzinfo.patch
-   $ micropython -m upip install nmongo
+   >>> import mip
+   >>> mip.install("datetime")
+   >>> mip.install(""https://github.com/nakagami/nmongo/blob/master/nmongo.py"")
 
 Example
 -----------
 
-Connect to Database
-~~~~~~~~~~~~~~~~~~~~
 
-::
-
-   >>> import nmongo
-   >>> db = nmongo.connect('servername', 'somewhatdatabase')
-   >>>
-
-SSL connection
-~~~~~~~~~~~~~~~~~~~~
-
-::
-
-   >>> import nmongo
-   >>> db = nmongo.connect('servername', 'somewhatdatabase', use_ssl=True)
-   >>>
-
-or
-
-::
-
-   >>> import nmongo
-   >>> db = nmongo.connect('servername', 'somewhatdatabase', use_ssl=True, ssl_ca_certs='/path/to/something-cert.crt)
-   >>>
-
-
-User Authentication
-~~~~~~~~~~~~~~~~~~~~
-
-::
-
-   >>> import nmongo
-   >>> db = nmongo.connect('servername', 'somewhatdatabase', user='user', password='password')
-   >>>
-
-
-Connect to Azure CosmosDB (MongoDB API)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Connect to Azure CosmosDB
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 ::
@@ -154,10 +115,8 @@ Count each collection records
    3
    >>>
 
-See also mongo Shell Methods (Collection and Database sections).
-
-- https://docs.mongodb.com/manual/reference/method/#collection
-- https://docs.mongodb.com/manual/reference/method/#database
+This driver uses OP_COMMNAD OP_COMMANDREPLY, which was removed in MongoDB 4.2.
+These documents have been removed too from the official documentation. Please let me know if there is any good documentation left somewhere.
 
 Features Not Implemented
 --------------------------
