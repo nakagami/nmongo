@@ -9,7 +9,7 @@ It has mongo shell like APIs.
 Support platform
 ------------------
 
-- CPython 3.5+ https://www.python.org
+- CPython 3.11+ https://www.python.org
 - MicroPython (unix) http://docs.micropython.org/en/latest/unix/　(I haven't tried any other platforms.)
 
 Support database
