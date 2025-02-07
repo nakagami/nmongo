@@ -12,12 +12,6 @@ Support platform
 - CPython 3.11+ https://www.python.org
 - MicroPython
 
-Support database
-------------------
-
-- MongoDB 3.2, 3.4, 3.6
-- Azure CosmosDB (MongoDB API)
-
 Install
 ----------
 
@@ -115,7 +109,7 @@ Count each collection records
    3
    >>>
 
-This driver uses OP_COMMNAD OP_COMMANDREPLY, which was removed in MongoDB 4.2.
+This driver uses OP_COMMNAD OP_COMMANDREPLY, which was added in MongoDB3.2 and removed in MongoDB 4.2.
 These documents have been removed too from the official documentation. Please let me know if there is any good documentation left somewhere.
 
 Features Not Implemented
