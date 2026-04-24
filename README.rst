@@ -39,14 +39,14 @@ Example
 -----------
 
 
-Connect to Azure CosmosDB
+Connect to DocumentDB
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 ::
 
    >>> import nmongo
-   >>> db = nmongo.connect('xxx.mongo.cosmos.azure.com', 'somewhatdatabase', user='xxx', password='password', port=10255)
+   >>> db = nmongo.connect('server', 'somewhatdatabase', user='xxx', password='password', port=10255)
    >>>
 
 
