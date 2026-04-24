@@ -16,11 +16,40 @@ jobs:
     - name: Install MicroPython
       run: |
         sudo apt install micropython
-        micropython -c "import mip; mip.install('time')"
-        micropython -c "import mip; mip.install('datetime')"
-        micropython -c "import mip; mip.install('unittest')"
-        micropython -c "import mip; mip.install('ssl')"
-        patch --directory=$HOME/.micropython/lib < tzinfo.patch
+        python3 - <<'PYEOF'
+        import urllib.request, json, os, subprocess
+
+        lib = os.path.expanduser('~/.micropython/lib')
+        os.makedirs(lib, exist_ok=True)
+
+        # Get MicroPython ABI version
+        r = subprocess.run(
+            ['micropython', '-c', 'import sys; print(sys.implementation._mpy & 0xFF)'],
+            capture_output=True, text=True
+        )
+        abi = r.stdout.strip() or '6'
+
+        rawlib = 'https://raw.githubusercontent.com/micropython/micropython-lib/master'
+        index  = 'https://micropython.org/pi/v2'
+
+        # datetime downloaded as .py so tzinfo.patch can be applied
+        urllib.request.urlretrieve(
+            f'{rawlib}/python-stdlib/datetime/datetime.py',
+            os.path.join(lib, 'datetime.py')
+        )
+        print('Installed datetime.py')
+
+        # time, unittest, ssl downloaded as .mpy from micropython.org
+        for pkg in ['time', 'unittest', 'ssl']:
+            info = json.loads(urllib.request.urlopen(
+                f'{index}/package/{abi}/{pkg}/latest.json'
+            ).read())
+            for fname, fhash in info['hashes']:
+                dest = os.path.join(lib, fname)
+                os.makedirs(os.path.dirname(dest) or lib, exist_ok=True)
+                urllib.request.urlretrieve(f'{index}/file/{fhash[:2]}/{fhash}', dest)
+                print(f'Installed {dest}')
+        PYEOF
     - name: Start DocumentDB
       run: |
         docker run -d -p 10260:10260 --name documentdb-container \
