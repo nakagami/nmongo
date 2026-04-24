@@ -39,6 +39,7 @@ class TestBase:
     ssl_ca_certs = None
     user = None
     password = ''
+    mechanism = 'SCRAM-SHA-1'
 
     def assertEqualDict(self, d1, d2):
         self.assertEqual(set(d1.keys()), set(d2.keys()))
@@ -53,7 +54,8 @@ class TestBase:
             user=self.user,
             password=self.password,
             use_ssl=self.use_ssl,
-            ssl_ca_certs=self.ssl_ca_certs
+            ssl_ca_certs=self.ssl_ca_certs,
+            mechanism=self.mechanism,
         )
         self.db.pets.drop()
         self.mongo_version = [int(n) for n in self.db.version().split('.')][:2]

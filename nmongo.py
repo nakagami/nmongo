@@ -29,7 +29,6 @@ import time
 import binascii
 import struct
 import random
-import ssl
 import hashlib
 
 
@@ -187,6 +186,22 @@ def hmac_sha1_digest(key, msg):
     else:
         import hmac
         return hmac.HMAC(key, msg, hashlib.sha1).digest()
+
+
+def hmac_sha256_digest(key, msg):
+    pad_key = key + b'\x00' * (64 - (len(key) % 64))
+    ik = bytes([0x36 ^ b for b in pad_key])
+    ok = bytes([0x5c ^ b for b in pad_key])
+    return hashlib.sha256(ok + hashlib.sha256(ik + msg).digest()).digest()
+
+
+def pbkdf2_hmac_sha256(password_bytes, salt, iterations):
+    _u1 = hmac_sha256_digest(password_bytes, salt + b'\x00\x00\x00\x01')
+    _ui = _bytes_to_big_uint(_u1)
+    for _ in range(iterations - 1):
+        _u1 = hmac_sha256_digest(password_bytes, _u1)
+        _ui ^= _bytes_to_big_uint(_u1)
+    return bytes(reversed(_uint_to_bytes(_ui, 32)))
 
 
 class OperationalError(Exception):
@@ -474,8 +489,7 @@ OP_QUERY = 2004
 OP_GET_MORE = 2005
 OP_DELETE = 2006
 OP_KILL_CURSORS = 2007
-OP_COMMAND = 2010
-OP_COMMANDREPLY = 2011
+OP_MSG_OPCODE = 2013
 COMMANDS = set([
     # https://docs.mongodb.com/manual/reference/command/
     # Aggregation Commands
@@ -585,7 +599,8 @@ COMMANDS = set([
     'filemd5',
     'createIndexes',
     'listIndexes',
-    'deleteIndexes',    # dropIndexes
+    'deleteIndexes',    # dropIndexes (legacy alias)
+    'dropIndexes',
     'fsync',
     'clean',
     'connPoolSync',
@@ -656,23 +671,30 @@ def _pack_message(op_code, request, response, body):
     return from_int32(len(b) + 4) + b
 
 
-def _command(request_id, database, metadata):
-    "Create command packet"
-    command_name = set([k for k in metadata]) & COMMANDS
+def _op_msg(request_id, database, metadata):
+    "Create OP_MSG packet (opcode 2013, MongoDB 3.6+)"
+    command_name = set(metadata.keys()) & COMMANDS
     if 'findAndModify' in command_name:
         command_name = 'findAndModify'
     elif len(command_name) == 1:
         command_name = command_name.pop()
     else:
-        raise ValueError('Bad Command:%s' % (metadata, ))
-    body = to_cstring(database) + to_cstring(command_name) + bson_encode(metadata, command_name) + bson_encode({})
-    return _pack_message(OP_COMMAND, request_id, 0, body)
+        command_name = next(iter(metadata))
+    doc = dict(metadata)
+    doc['$db'] = database
+    flag_bits = b'\x00\x00\x00\x00'
+    section = b'\x00' + bson_encode(doc, command_name)
+    body = flag_bits + section
+    return _pack_message(OP_MSG_OPCODE, request_id, 0, body)
 
 
-def _command_reply(data):
-    "Parse command reply packet"
-    metadata, _ = bson_decode(data)
-    return metadata
+def _op_msg_reply(data):
+    "Parse OP_MSG reply packet"
+    section_type = data[4]
+    if section_type == 0:
+        doc, _ = bson_decode(data[5:])
+        return doc
+    raise ValueError("Unexpected OP_MSG section type: %d" % section_type)
 
 
 class MongoCursor:
@@ -803,7 +825,7 @@ class MongoCollection:
         return metadata['ok'] == 1.0
 
     def dropIndex(self, idx_name):
-        return self.db.runCommand({'deleteIndexes': self.name, 'index': idx_name})
+        return self.db.runCommand({'dropIndexes': self.name, 'index': idx_name})
 
     def dropIndexes(self):
         return self.dropIndex('*')
@@ -1080,15 +1102,18 @@ class MongoDatabase:
     def _get_time_bytes(self):
         return bytes(reversed(from_int32(int(time.time()))))
 
-    def __init__(self, host, database, user, password, port, use_ssl, ssl_ca_certs):
+    def __init__(self, host, database, user, password, port, use_ssl, ssl_ca_certs, mechanism='SCRAM-SHA-1'):
         self.host = host
         self.database = database
         self.user = user
         self.password = password
         self.port = port
+        self.use_ssl = use_ssl
+        self.mechanism = mechanism
         self._sock = socket.socket()
         self._sock.connect(socket.getaddrinfo(self.host, self.port, socket.AF_INET)[0][-1])
         if use_ssl:
+            import ssl
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             if ssl_ca_certs:
                 context.load_verify_locations(ssl_ca_certs)
@@ -1140,11 +1165,12 @@ class MongoDatabase:
 
     def auth(self, user, password):
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
+        # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-256
         printable = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/'
         nonce = ''.join(printable[random.randrange(0, len(printable))] for i in range(32))
         r = self.runCommand({
             'saslStart': 1.0,
-            'mechanism': 'SCRAM-SHA-1',
+            'mechanism': self.mechanism,
             'payload': ('n,,n=%s,r=%s' % (user, nonce)).encode('utf-8'),
         }, database='admin')
         if not r['ok']:
@@ -1153,44 +1179,56 @@ class MongoDatabase:
         reply_payload['i'] = int(reply_payload['i'])
         assert reply_payload['r'][:len(nonce)] == nonce
 
-        password = binascii.hexlify(hashlib.md5((user + ':mongo:' + password).encode('utf-8')).digest())
-
-        # calc salted_pass
-        if sys.implementation.name == 'micropython':
-            _u1 = hmac_sha1_digest(
-                password,
-                base64_decode(reply_payload['s']) + b'\x00\x00\x00\x01'
-            )
-            _ui = _bytes_to_big_uint(_u1)
-            for _ in range(reply_payload['i'] - 1):
-                _u1 = hmac_sha1_digest(password, _u1)
-                _ui ^= _bytes_to_big_uint(_u1)
-            # 20 is sha1 hash size
-            salted_pass = _uint_to_bytes(_ui, 20)
-            # reverse (little to big endian)
-            salted_pass = bytes(reversed(bytearray(salted_pass)))
-        else:
-            salted_pass = hashlib.pbkdf2_hmac(
-                'sha1',
-                password,
+        if self.mechanism == 'SCRAM-SHA-256':
+            # Password is used as-is (UTF-8 encoded), no MD5 hashing
+            prep_password = password.encode('utf-8')
+            salted_pass = pbkdf2_hmac_sha256(
+                prep_password,
                 base64_decode(reply_payload['s']),
                 reply_payload['i'],
             )
+            hmac_fn = hmac_sha256_digest
+            hash_fn = hashlib.sha256
+        else:
+            # SCRAM-SHA-1: password is MD5(user:mongo:password) as hex
+            prep_password = binascii.hexlify(hashlib.md5((user + ':mongo:' + password).encode('utf-8')).digest())
+            if sys.implementation.name == 'micropython':
+                _u1 = hmac_sha1_digest(
+                    prep_password,
+                    base64_decode(reply_payload['s']) + b'\x00\x00\x00\x01'
+                )
+                _ui = _bytes_to_big_uint(_u1)
+                for _ in range(reply_payload['i'] - 1):
+                    _u1 = hmac_sha1_digest(prep_password, _u1)
+                    _ui ^= _bytes_to_big_uint(_u1)
+                # 20 is sha1 hash size
+                salted_pass = _uint_to_bytes(_ui, 20)
+                # reverse (little to big endian)
+                salted_pass = bytes(reversed(bytearray(salted_pass)))
+            else:
+                salted_pass = hashlib.pbkdf2_hmac(
+                    'sha1',
+                    prep_password,
+                    base64_decode(reply_payload['s']),
+                    reply_payload['i'],
+                )
+            hmac_fn = hmac_sha1_digest
+            hash_fn = hashlib.sha1
 
-        client_key = hmac_sha1_digest(salted_pass, b"Client Key")
+        client_key = hmac_fn(salted_pass, b"Client Key")
         auth_msg = b"n=%s,r=%s,%s,c=biws,r=%s" % (
             user.encode('utf-8'),
             nonce.encode('utf-8'),r['payload'],
             reply_payload['r'].encode('utf-8'),
         )
-        client_sig = hmac_sha1_digest(hashlib.sha1(client_key).digest(), auth_msg)
+        client_sig = hmac_fn(hash_fn(client_key).digest(), auth_msg)
         proof = base64_encode(
             b"".join([bytes([x ^ y]) for x, y in zip(client_key, client_sig)])
         )
         payload = ("c=biws,r=%s,p=" % reply_payload['r']).encode('utf-8') + proof
 
-        k = hmac_sha1_digest(salted_pass, b"Server Key")
-        server_sig = base64_encode(hmac_sha1_digest(k, auth_msg)).decode('utf-8')
+        k = hmac_fn(salted_pass, b"Server Key")
+        server_sig = base64_encode(hmac_fn(k, auth_msg)).decode('utf-8')
 
         r = self.runCommand({
             'saslContinue': 1.0,
@@ -1297,17 +1335,15 @@ class MongoDatabase:
     def runCommand(self, metadata, database=None):
         if database is None:
             database = self.database
-        self._send(_command(self._request_id, database, metadata))
+        self._send(_op_msg(self._request_id, database, metadata))
         self._request_id += 1
 
         head = self._recv(16)
         ln = to_uint(head[0:4])
-        # request_id = to_uint(head[4:8])
-        # response_id = to_uint(head[8:12])
         opcode = to_uint(head[12:16])
-        assert opcode == OP_COMMANDREPLY
+        assert opcode == OP_MSG_OPCODE, "Unexpected opcode: %d" % opcode
         data = self._recv(ln - 16)
-        return _command_reply(data)
+        return _op_msg_reply(data)
 
     def serverBuildInfo(self):
         return self.runCommand({'buildInfo': 1.0})
@@ -1325,5 +1361,5 @@ class MongoDatabase:
         self._sock.close()
 
 
-def connect(host, database, user=None, password='', port=27017, use_ssl=False, ssl_ca_certs=None):
-    return MongoDatabase(host, database, user, password, port, use_ssl, ssl_ca_certs)
+def connect(host, database, user=None, password='', port=27017, use_ssl=False, ssl_ca_certs=None, mechanism='SCRAM-SHA-1'):
+    return MongoDatabase(host, database, user, password, port, use_ssl, ssl_ca_certs, mechanism)

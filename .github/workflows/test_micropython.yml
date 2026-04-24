@@ -20,10 +20,23 @@ jobs:
     - name: Install MicroPython
       run: |
         sudo apt install micropython
-        micropython -m upip install micropython-time
-        micropython -m upip install micropython-datetime
-        micropython -m upip install micropython-unittest
+        micropython -c "import mip; mip.install('time')"
+        micropython -c "import mip; mip.install('datetime')"
+        micropython -c "import mip; mip.install('unittest')"
+        micropython -c "import mip; mip.install('ssl')"
         patch --directory=$HOME/.micropython/lib < tzinfo.patch
-    - name: Test
+    - name: Test with MicroPython (MongoDB)
       run: |
         micropython test_nmongo.py
+    - name: Start DocumentDB
+      run: |
+        docker run -d -p 10260:10260 --name documentdb-container \
+          ghcr.io/documentdb/documentdb/documentdb-local:latest \
+          --username testuser --password testpassword
+        sleep 15
+    - name: Test with MicroPython (DocumentDB)
+      env:
+        DOCUMENTDB_USER: testuser
+        DOCUMENTDB_PASSWORD: testpassword
+      run: |
+        micropython test_documentdb.py

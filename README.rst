@@ -2,7 +2,7 @@
 nmongo
 ==========
 
-Azure Cosmos DB for MongoDB client for CPython and MicroPython.
+DocumentDB client for CPython and MicroPython.
 
 It has mongo shell like APIs.
 
