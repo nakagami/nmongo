@@ -26,7 +26,7 @@ MicroPython
 
 Go interactive shell and install with mip as follow.
 
-If you connect with SSL, install the ``ssl`` module too.
+SSL is always required. Install the ``ssl`` module.
 
 ::
 
