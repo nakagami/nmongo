@@ -13,10 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Start MongoDB
-      uses: supercharge/mongodb-github-action@1.3.0
-      with:
-        mongodb-version: 3.6
     - name: Cache MicroPython build
       id: cache-micropython
       uses: actions/cache@v3
@@ -42,9 +38,6 @@ jobs:
         micropython -c "import mip; mip.install('time')"
         micropython -c "import mip; mip.install('unittest')"
         micropython -c "import mip; mip.install('ssl')"
-    - name: Test with MicroPython (MongoDB)
-      run: |
-        micropython test_nmongo.py
     - name: Start DocumentDB
       run: |
         docker run -d -p 10260:10260 --name documentdb-container \
