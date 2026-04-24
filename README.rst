@@ -2,7 +2,7 @@
 nmongo
 ==========
 
-DocumentDB client for CPython and MicroPython.
+DocumentDB (https://documentdb.io/) client for CPython and MicroPython.
 
 It has mongo shell like APIs.
 
