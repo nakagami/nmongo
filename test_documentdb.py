@@ -33,9 +33,180 @@
 # Usage:
 #   DOCUMENTDB_USER=<username> DOCUMENTDB_PASSWORD=<password> python test_documentdb.py
 ###############################################################################
+import sys
 import os
 import unittest
-from test_nmongo import TestBase
+import datetime
+import nmongo
+try:
+    from decimal import Decimal
+except ImportError:
+    from nmongo import Decimal
+
+
+class TestBase:
+    ssl_ca_certs = None
+    user = None
+    password = ''
+    mechanism = 'SCRAM-SHA-256'
+
+    def assertEqualDict(self, d1, d2):
+        self.assertEqual(set(d1.keys()), set(d2.keys()))
+        for k, v in d1.items():
+            self.assertEqual(d2.get(k), v)
+
+    def setUp(self):
+        self.db = nmongo.connect(
+            self.host,
+            self.database,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            use_ssl=self.use_ssl,
+            ssl_ca_certs=self.ssl_ca_certs,
+            mechanism=self.mechanism,
+        )
+        self.db.pets.drop()
+        self.mongo_version = [int(n) for n in self.db.version().split('.')][:2]
+
+        self.data1 = {
+            'name': 'Kitty',
+            'gender': 'f',
+            'age': 0,
+            'species': 'cat',
+        }
+        if self.mongo_version > [3, 2]:
+            self.data1['weight'] = Decimal("123.4")
+
+        if sys.implementation.name != 'micropython':
+            self.data1['birth'] = datetime.datetime(1974, 11, 1, 1, 1)
+        self.data2 = {
+            'name': 'Snoopy',
+            'gender': 'm',
+            'age': 0,
+            'species': 'cat',
+        }
+        if self.mongo_version > [3, 2]:
+            self.data2['weight'] = Decimal("1234.0")
+        self.data3 = {
+            'name': 'Kuri',
+            'gender': 'm',
+            'age': 0,
+            'species': 'ferret',
+        }
+        if self.mongo_version > [3, 2]:
+            self.data3['weight'] = Decimal("NaN")
+
+        self.db.pets.insert(self.data1)
+        self.db.pets.insert([self.data2, self.data3])
+        self.assertIn('pets', self.db.getCollectionNames())
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_base(self):
+
+        # Read
+        cur = self.db.pets.find(projection={'_id': 0})
+        self.assertEqualDict(cur.fetchone(), self.data1)
+
+        self.assertEqual(self.db.pets.count(), 3)
+
+        self.assertEqual(set(self.db.pets.distinct('gender')), set(['m', 'f']))
+
+        # findAndModify
+        prev_data1 = self.db.pets.findAndModify(
+            query={'name': 'Kitty'},
+            update={'$inc': {'age': 1}},
+        )
+        next_data1 = self.db.pets.findOne({'name': 'Kitty'})
+        self.assertEqual(prev_data1['age'] + 1, next_data1['age'])
+
+        # Update
+        r = self.db.pets.update(
+            {'name': 'Snoopy'},
+            {'name': 'Snoopy', 'gender': 'f', 'age': 10, 'species': 'wolf'}
+        )
+        self.assertTrue(r['ok'])
+        self.assertEqual(r['nModified'], 1)
+        self.assertEqualDict(
+            self.db.pets.findOne({'name': 'Snoopy'}, projection={'_id': 0}),
+            {'name': 'Snoopy', 'gender': 'f', 'age': 10, 'species': 'wolf'},
+        )
+
+        r = self.db.pets.updateOne(
+            {'name': 'Snoopy'},
+            {'$set': {'gender': 'm'}, '$inc': {'age': 1}},
+        )
+        self.assertTrue(r['ok'])
+        self.assertEqual(r['nModified'], 1)
+        self.assertEqual(
+            self.db.pets.findOne({'name': 'Snoopy'}, projection={'_id': 0}),
+            {'name': 'Snoopy', 'gender': 'm', 'age': 11, 'species': 'wolf'},
+        )
+
+        self.assertEqual(self.db.pets.count(), 3)
+        r = self.db.pets.updateMany(
+            {},
+            {'$inc': {'age': 1}},
+        )
+        self.assertTrue(r['ok'])
+        self.assertEqual(r['n'], 3)
+        self.assertEqual(r['nModified'], 3)
+        r = self.db.pets.updateMany(
+            {'name': {'$eq': 'Kitty'}},
+            {'$set': {'gender': 'f'}},
+        )
+        self.assertTrue(r['ok'])
+        self.assertEqual(r['n'], 1)
+        self.assertEqual(r['nModified'], 0)
+
+        # Delete
+        self.assertEqual(self.db.pets.count(), 3)
+        self.db.pets.insert(self.data1)
+        self.assertEqual(self.db.pets.count(), 4)
+        self.assertEqual(self.db.pets.remove({'name': 'Kitty', 'age': 0}), 1)
+        self.assertEqual(self.db.pets.count(), 3)
+        self.assertEqual(self.db.pets.findOneAndDelete({'name': 'Kitty'})['age'], 2)
+        self.assertEqual(self.db.pets.count(), 2)
+
+        # insertOne, insertMany
+        self.db.pets.drop()
+        oid = self.db.pets.insertOne(self.data1)
+        self.assertEqual(
+            self.db.pets.find({'_id': oid}).fetchone()['name'],
+            self.data1['name']
+        )
+        oids = self.db.pets.insertMany([self.data2, self.data3])
+        self.assertEqual(
+            self.db.pets.find({'_id': oids[0]}).fetchone()['name'],
+            self.data2['name']
+        )
+
+    def test_decimal(self):
+        datum = [
+            [100, (0, (1, 0, 0), 0), '100'],
+            [-100, (1, (1, 0, 0), 0), '-100'],
+            ['100', (0, (1, 0, 0), 0), '100'],
+            ['-100', (1, (1, 0, 0), 0), '-100'],
+            ['12.3456789', (0, (1, 2, 3, 4, 5, 6, 7, 8, 9), -7), '12.3456789'],
+            ['123.456789', (0, (1, 2, 3, 4, 5, 6, 7, 8, 9), -6), '123.456789'],
+            ['1234.56789', (0, (1, 2, 3, 4, 5, 6, 7, 8, 9), -5), '1234.56789'],
+            ['-12.3456789', (1, (1, 2, 3, 4, 5, 6, 7, 8, 9), -7), '-12.3456789'],
+            ['-123.456789', (1, (1, 2, 3, 4, 5, 6, 7, 8, 9), -6), '-123.456789'],
+            ['-1234.56789', (1, (1, 2, 3, 4, 5, 6, 7, 8, 9), -5), '-1234.56789'],
+            ['NaN', (0, (), 'n'), 'NaN'],
+            ['-NaN', (1, (), 'n'), '-NaN'],
+            ['sNaN', (0, (), 'N'), 'sNaN'],
+            ['-sNaN', (1, (), 'N'), '-sNaN'],
+            ['Infinity', (0, (0, ), 'F'), 'Infinity'],
+            ['-Infinity', (1, (0, ), 'F'), '-Infinity'],
+            ['Inf', (0, (0, ), 'F'), 'Infinity'],
+            ['-Inf', (1, (0, ), 'F'), '-Infinity'],
+        ]
+        for data in datum:
+            self.assertEqual(tuple(Decimal(data[0]).as_tuple()), data[1])
+            self.assertEqual(str(Decimal(data[0])), data[2])
 
 
 class TestDocumentDB(TestBase, unittest.TestCase):
@@ -78,8 +249,8 @@ class TestDocumentDB(TestBase, unittest.TestCase):
     def test_map_reduce(self):
         self.assertTrue(
             self.db.pets.mapReduce(
-                "function(){}",             # map
-                "function(key, values){}",  # reduce
+                "function(){}",
+                "function(key, values){}",
                 {'out': {'inline': 1}}
             )['ok']
         )
@@ -88,9 +259,9 @@ class TestDocumentDB(TestBase, unittest.TestCase):
     def test_group(self):
         self.assertTrue(
             self.db.pets.group(
-                {'name': 1, 'gender': 1},     # key
-                "function (c, r) {}",       # reduce
-                {},                         # initial
+                {'name': 1, 'gender': 1},
+                "function (c, r) {}",
+                {},
                 cond={'gender': 'm'},
             )['ok']
         )
@@ -98,3 +269,4 @@ class TestDocumentDB(TestBase, unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
