@@ -26,7 +26,7 @@ MicroPython
 
 Go interactive shell and install with mip as follow.
 
-If you connect with SSL (e.g. DocumentDB), install the ``ssl`` module too.
+If you connect with SSL, install the ``ssl`` module too.
 
 ::
 
@@ -46,7 +46,7 @@ Connect to Azure CosmosDB
 ::
 
    >>> import nmongo
-   >>> db = nmongo.connect('xxx.mongo.cosmos.azure.com', 'somewhatdatabase', user='xxx', password='password', port=10255, use_ssl=True)
+   >>> db = nmongo.connect('xxx.mongo.cosmos.azure.com', 'somewhatdatabase', user='xxx', password='password', port=10255)
    >>>
 
 

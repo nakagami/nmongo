@@ -62,7 +62,6 @@ class TestBase:
             port=self.port,
             user=self.user,
             password=self.password,
-            use_ssl=self.use_ssl,
             ssl_ca_certs=self.ssl_ca_certs,
             mechanism=self.mechanism,
         )
@@ -215,7 +214,6 @@ class TestDocumentDB(TestBase, unittest.TestCase):
     host = os.getenv('DOCUMENTDB_HOST', 'localhost')
     port = int(os.getenv('DOCUMENTDB_PORT', '10260'))
     database = 'test_nmongo'
-    use_ssl = True
     ssl_ca_certs = None  # TLS without certificate verification (tlsAllowInvalidCertificates=true)
     mechanism = 'SCRAM-SHA-256'
 

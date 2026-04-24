@@ -1102,25 +1102,23 @@ class MongoDatabase:
     def _get_time_bytes(self):
         return bytes(reversed(from_int32(int(time.time()))))
 
-    def __init__(self, host, database, user, password, port, use_ssl, ssl_ca_certs, mechanism='SCRAM-SHA-1'):
+    def __init__(self, host, database, user, password, port, ssl_ca_certs, mechanism='SCRAM-SHA-1'):
         self.host = host
         self.database = database
         self.user = user
         self.password = password
         self.port = port
-        self.use_ssl = use_ssl
         self.mechanism = mechanism
         self._sock = socket.socket()
         self._sock.connect(socket.getaddrinfo(self.host, self.port, socket.AF_INET)[0][-1])
-        if use_ssl:
-            import ssl
-            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            if ssl_ca_certs:
-                context.load_verify_locations(ssl_ca_certs)
-            else:
-                context.check_hostname = False
-                context.verify_mode = ssl.CERT_NONE
-            self._sock = context.wrap_socket(self._sock, server_hostname=self.host)
+        import ssl
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        if ssl_ca_certs:
+            context.load_verify_locations(ssl_ca_certs)
+        else:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+        self._sock = context.wrap_socket(self._sock, server_hostname=self.host)
 
         self._request_id = 0
 
@@ -1141,7 +1139,7 @@ class MongoDatabase:
     def _send(self, b):
         n = 0
         while (n < len(b)):
-            if self.use_ssl and sys.implementation.name == 'micropython':
+            if sys.implementation.name == 'micropython':
                 n += self._sock.write(b[n:])
             else:
                 n += self._sock.send(b[n:])
@@ -1149,7 +1147,7 @@ class MongoDatabase:
     def _recv(self, ln):
         r = b''
         while len(r) < ln:
-            if self.use_ssl and sys.implementation.name == 'micropython':
+            if sys.implementation.name == 'micropython':
                 b = self._sock.read(ln-len(r))
             else:
                 b = self._sock.recv(ln-len(r))
@@ -1361,5 +1359,5 @@ class MongoDatabase:
         self._sock.close()
 
 
-def connect(host, database, user=None, password='', port=27017, use_ssl=False, ssl_ca_certs=None, mechanism='SCRAM-SHA-1'):
-    return MongoDatabase(host, database, user, password, port, use_ssl, ssl_ca_certs, mechanism)
+def connect(host, database, user=None, password='', port=27017, ssl_ca_certs=None, mechanism='SCRAM-SHA-1'):
+    return MongoDatabase(host, database, user, password, port, ssl_ca_certs, mechanism)
