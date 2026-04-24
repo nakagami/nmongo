@@ -4,8 +4,6 @@ nmongo
 
 DocumentDB (https://documentdb.io/) client for CPython and MicroPython.
 
-It has mongo shell like APIs.
-
 Support platform
 ------------------
 
@@ -16,17 +14,19 @@ Install
 ----------
 
 CPython
++++++++++++++++
 
 ::
 
    $ python3 -m pip install nmongo
 
+or copy https://raw.githubusercontent.com/nakagami/nmongo/master/nmongo.py
+to python path directry.
 
 MicroPython
++++++++++++++++
 
 Go interactive shell and install with mip as follow.
-
-SSL is always required. Install the ``ssl`` module.
 
 ::
 
