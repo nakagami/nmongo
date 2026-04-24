@@ -26,11 +26,14 @@ MicroPython
 
 Go interactive shell and install with mip as follow.
 
+If you connect with SSL (e.g. DocumentDB), install the ``ssl`` module too.
+
 ::
 
    >>> import mip
    >>> mip.install("datetime")
-   >>> mip.install(""https://github.com/nakagami/nmongo/blob/master/nmongo.py"")
+   >>> mip.install("ssl")
+   >>> mip.install("https://raw.githubusercontent.com/nakagami/nmongo/master/nmongo.py")
 
 Example
 -----------
@@ -108,9 +111,6 @@ Count each collection records
    >>> db.getCollection('fruits').count()
    3
    >>>
-
-This driver uses OP_COMMNAD OP_COMMANDREPLY, which was added in MongoDB3.2 and removed in MongoDB 4.2.
-These documents have been removed too from the official documentation. Please let me know if there is any good documentation left somewhere.
 
 Features Not Implemented
 --------------------------
