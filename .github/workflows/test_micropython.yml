@@ -10,13 +10,9 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Start MongoDB
-      uses: supercharge/mongodb-github-action@1.3.0
-      with:
-        mongodb-version: 3.6
     - name: Install MicroPython
       run: |
         sudo apt install micropython
@@ -25,9 +21,6 @@ jobs:
         micropython -c "import mip; mip.install('unittest')"
         micropython -c "import mip; mip.install('ssl')"
         patch --directory=$HOME/.micropython/lib < tzinfo.patch
-    - name: Test with MicroPython (MongoDB)
-      run: |
-        micropython test_nmongo.py
     - name: Start DocumentDB
       run: |
         docker run -d -p 10260:10260 --name documentdb-container \
