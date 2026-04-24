@@ -14,7 +14,7 @@ Install
 ----------
 
 CPython
-+++++++++++++++
+~~~~~~~~~~~~~~~
 
 ::
 
@@ -24,7 +24,7 @@ or copy https://raw.githubusercontent.com/nakagami/nmongo/master/nmongo.py
 to python path directry.
 
 MicroPython
-+++++++++++++++
+~~~~~~~~~~~~~~~
 
 Go interactive shell and install with mip as follow.
 
