@@ -48,7 +48,6 @@ class TestBase:
     ssl_ca_certs = None
     user = None
     password = ''
-    mechanism = 'SCRAM-SHA-256'
 
     def assertEqualDict(self, d1, d2):
         self.assertEqual(set(d1.keys()), set(d2.keys()))
@@ -63,7 +62,6 @@ class TestBase:
             user=self.user,
             password=self.password,
             ssl_ca_certs=self.ssl_ca_certs,
-            mechanism=self.mechanism,
         )
         self.db.pets.drop()
         self.mongo_version = [int(n) for n in self.db.version().split('.')][:2]
@@ -215,7 +213,6 @@ class TestDocumentDB(TestBase, unittest.TestCase):
     port = int(os.getenv('DOCUMENTDB_PORT', '10260'))
     database = 'test_nmongo'
     ssl_ca_certs = None  # TLS without certificate verification (tlsAllowInvalidCertificates=true)
-    mechanism = 'SCRAM-SHA-256'
 
     def test_documentdb_index(self):
         self.db.pets.createIndex(

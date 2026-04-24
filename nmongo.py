@@ -161,33 +161,6 @@ def base64_encode(s):
 def base64_decode(s):
     return binascii.a2b_base64(s)
 
-
-def hmac_sha1_digest(key, msg):
-    if sys.implementation.name == 'micropython':
-        def translate(d, t):
-            return bytes(t[x] for x in d)
-        trans_5C = bytes((x ^ 0x5C) for x in range(256))
-        trans_36 = bytes((x ^ 0x36) for x in range(256))
-
-        outer = hashlib.sha1()
-        inner = hashlib.sha1()
-        digest_size = 20
-        blocksize = 64
-
-        if len(key) > blocksize:
-            key = hashlib.sha1(key).digest()
-
-        key = key + bytes(blocksize - len(key))
-        outer.update(translate(key, trans_5C))
-        inner.update(translate(key, trans_36))
-        inner.update(msg)
-        outer.update(inner.digest())
-        return outer.digest()
-    else:
-        import hmac
-        return hmac.HMAC(key, msg, hashlib.sha1).digest()
-
-
 def hmac_sha256_digest(key, msg):
     pad_key = key + b'\x00' * (64 - (len(key) % 64))
     ik = bytes([0x36 ^ b for b in pad_key])
@@ -1102,13 +1075,12 @@ class MongoDatabase:
     def _get_time_bytes(self):
         return bytes(reversed(from_int32(int(time.time()))))
 
-    def __init__(self, host, database, user, password, port, ssl_ca_certs, mechanism='SCRAM-SHA-1'):
+    def __init__(self, host, database, user, password, port, ssl_ca_certs):
         self.host = host
         self.database = database
         self.user = user
         self.password = password
         self.port = port
-        self.mechanism = mechanism
         self._sock = socket.socket()
         self._sock.connect(socket.getaddrinfo(self.host, self.port, socket.AF_INET)[0][-1])
         import ssl
@@ -1162,13 +1134,12 @@ class MongoDatabase:
         return MongoCollection(self, name)
 
     def auth(self, user, password):
-        # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-1
         # https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#scram-sha-256
         printable = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/'
         nonce = ''.join(printable[random.randrange(0, len(printable))] for i in range(32))
         r = self.runCommand({
             'saslStart': 1.0,
-            'mechanism': self.mechanism,
+            'mechanism': 'SCRAM-SHA-256',
             'payload': ('n,,n=%s,r=%s' % (user, nonce)).encode('utf-8'),
         }, database='admin')
         if not r['ok']:
@@ -1177,41 +1148,15 @@ class MongoDatabase:
         reply_payload['i'] = int(reply_payload['i'])
         assert reply_payload['r'][:len(nonce)] == nonce
 
-        if self.mechanism == 'SCRAM-SHA-256':
-            # Password is used as-is (UTF-8 encoded), no MD5 hashing
-            prep_password = password.encode('utf-8')
-            salted_pass = pbkdf2_hmac_sha256(
-                prep_password,
-                base64_decode(reply_payload['s']),
-                reply_payload['i'],
-            )
-            hmac_fn = hmac_sha256_digest
-            hash_fn = hashlib.sha256
-        else:
-            # SCRAM-SHA-1: password is MD5(user:mongo:password) as hex
-            prep_password = binascii.hexlify(hashlib.md5((user + ':mongo:' + password).encode('utf-8')).digest())
-            if sys.implementation.name == 'micropython':
-                _u1 = hmac_sha1_digest(
-                    prep_password,
-                    base64_decode(reply_payload['s']) + b'\x00\x00\x00\x01'
-                )
-                _ui = _bytes_to_big_uint(_u1)
-                for _ in range(reply_payload['i'] - 1):
-                    _u1 = hmac_sha1_digest(prep_password, _u1)
-                    _ui ^= _bytes_to_big_uint(_u1)
-                # 20 is sha1 hash size
-                salted_pass = _uint_to_bytes(_ui, 20)
-                # reverse (little to big endian)
-                salted_pass = bytes(reversed(bytearray(salted_pass)))
-            else:
-                salted_pass = hashlib.pbkdf2_hmac(
-                    'sha1',
-                    prep_password,
-                    base64_decode(reply_payload['s']),
-                    reply_payload['i'],
-                )
-            hmac_fn = hmac_sha1_digest
-            hash_fn = hashlib.sha1
+        # Password is used as-is (UTF-8 encoded), no MD5 hashing
+        prep_password = password.encode('utf-8')
+        salted_pass = pbkdf2_hmac_sha256(
+            prep_password,
+            base64_decode(reply_payload['s']),
+            reply_payload['i'],
+        )
+        hmac_fn = hmac_sha256_digest
+        hash_fn = hashlib.sha256
 
         client_key = hmac_fn(salted_pass, b"Client Key")
         auth_msg = b"n=%s,r=%s,%s,c=biws,r=%s" % (
@@ -1359,5 +1304,5 @@ class MongoDatabase:
         self._sock.close()
 
 
-def connect(host, database, user=None, password='', port=27017, ssl_ca_certs=None, mechanism='SCRAM-SHA-1'):
-    return MongoDatabase(host, database, user, password, port, ssl_ca_certs, mechanism)
+def connect(host, database, user=None, password='', port=27017, ssl_ca_certs=None):
+    return MongoDatabase(host, database, user, password, port, ssl_ca_certs)
