@@ -2,7 +2,6 @@ from distutils.core import setup
 
 classifiers = [
     'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: MIT License',
     'Operating System :: OS Independent',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
